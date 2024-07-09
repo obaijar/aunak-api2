@@ -20,6 +20,7 @@ class Video(models.Model):
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
     subject = models.CharField(max_length=7, choices=SUBJECT_CHOICES, default='physics')
     subject_type = models.CharField(max_length=7, choices=SUBJECT_type_CHOICES, default='physics')
+    teacher = models.CharField(max_length=255, default="Default Teacher Name")
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -29,5 +30,5 @@ class VideoView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     video = models.ForeignKey(Video, on_delete=models.CASCADE)
     view_count = models.PositiveIntegerField(default=0)
-
+    
         

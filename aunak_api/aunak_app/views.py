@@ -73,7 +73,8 @@ class VideoListAPIView(generics.ListAPIView):
         subject = self.kwargs.get('subject')
         grade = self.kwargs.get('grade')
         subject_type = self.kwargs.get('subject_type')
-        return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type)
+        teacher = self.kwargs.get('teacher')
+        return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type,teacher=teacher)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

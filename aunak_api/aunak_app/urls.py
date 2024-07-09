@@ -9,6 +9,6 @@ urlpatterns = [
     path('api/logoutall/', knox_views.LogoutAllView.as_view(), name='logoutall'),
     path('api/videos_upload/', VideoListCreateAPI.as_view(), name='video-list-create'),
     path('api/videos/<int:pk>/', VideoDetailAPI.as_view(), name='video-detail'),
-    path('api/videos/<str:subject>/<str:subject_type>/<str:grade>/', VideoListAPIView.as_view(), name='video-list'),
+    path('api/videos/<str:subject>/<str:subject_type>/<str:grade>/<str:teacher>/', VideoListAPIView.as_view(), name='video-list'),
     
 ]
