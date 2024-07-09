@@ -41,9 +41,12 @@ class LoginAPI(APIView):
         user = authenticate(request, username=username, password=password) 
         if user:
             _, token = AuthToken.objects.create(user)
-            return Response({'user': user.username, 'token': token})
+            return Response({
+                'user': user.username,
+                'token': token,
+                'isadmin': user.is_staff
+            })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
 class VideoListCreateAPI(generics.ListCreateAPIView):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer

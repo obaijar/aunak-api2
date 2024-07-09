@@ -8,13 +8,18 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email')
 
 class RegisterSerializer(serializers.ModelSerializer):
+    is_admin = serializers.BooleanField(write_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email','password')
+        fields = ('username', 'password', 'is_admin')
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
+        is_admin = validated_data.pop('is_admin', False)
         user = User.objects.create_user(**validated_data)
+        user.is_staff = is_admin
+        user.save()
         return user
 
 class VideoSerializer(serializers.ModelSerializer):
