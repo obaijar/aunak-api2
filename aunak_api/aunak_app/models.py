@@ -1,5 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import User
+
+class Teacher(models.Model):
+    name = models.CharField(max_length=255)
+    age = models.CharField(max_length=255)
+    def __str__(self):
+        return self.name
+
 class Video(models.Model):
     GRADE_CHOICES = [
         ('9', '9th Grade'),
@@ -20,11 +27,13 @@ class Video(models.Model):
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
     subject = models.CharField(max_length=7, choices=SUBJECT_CHOICES, default='physics')
     subject_type = models.CharField(max_length=7, choices=SUBJECT_type_CHOICES, default='physics')
-    teacher = models.CharField(max_length=255, default="Default Teacher Name")
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
+
+
 
 class VideoView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

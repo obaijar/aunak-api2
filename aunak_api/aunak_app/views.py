@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from .models import Video , VideoView
+from .models import Video , VideoView , Teacher
 # Create your views here.
 from rest_framework import generics,permissions
 from rest_framework.response import Response
  
-from .serializer import UserSerializer , RegisterSerializer,VideoSerializer
+from .serializer import UserSerializer , RegisterSerializer,VideoSerializer ,TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -92,3 +92,9 @@ class VideoListAPIView(generics.ListAPIView):
             video_view.save()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+from rest_framework import viewsets
+
+class TeacherViewSet(viewsets.ModelViewSet):
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer

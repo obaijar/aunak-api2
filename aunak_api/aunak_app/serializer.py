@@ -1,12 +1,17 @@
 from rest_framework import serializers , generics
 from django.contrib.auth.models import User
-from .models import Video
+from .models import Video , Teacher
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
 
+class TeacherSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ('id', 'name', 'age') 
+    
 class RegisterSerializer(serializers.ModelSerializer):
     is_admin = serializers.BooleanField(write_only=True)
 
