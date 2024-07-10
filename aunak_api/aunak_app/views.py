@@ -109,9 +109,9 @@ class TrackViewAPIView(generics.GenericAPIView):
             )
         video_view.view_count += 1
         video_view.save()
-        
+        video_url = request.build_absolute_uri(video.video_file.url)
         return Response(
-            {"detail": "View count increased.", "video_url": video.video_file.url},
+            {"detail": "View count increased.", "video_url": video_url},
             status=status.HTTP_200_OK
         )
 
