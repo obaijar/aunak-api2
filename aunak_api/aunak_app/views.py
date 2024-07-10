@@ -78,8 +78,7 @@ class VideoListAPIView(generics.ListAPIView):
         subject_type = self.kwargs.get('subject_type')
         teacher = self.kwargs.get('teacher')
         return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type,teacher=teacher)
-
-    def list(self, request, *args, **kwargs):
+    """def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         for video in queryset:
             video_view, created = VideoView.objects.get_or_create(user=request.user, video=video)
@@ -91,7 +90,31 @@ class VideoListAPIView(generics.ListAPIView):
             video_view.view_count += 1
             video_view.save()
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(serializer.data)"""
+class TrackViewAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        video_id = self.kwargs.get('video_id')
+        try:
+            video = Video.objects.get(id=video_id)
+        except Video.DoesNotExist:
+            return Response({"detail": "Video not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        video_view, created = VideoView.objects.get_or_create(user=request.user, video=video)
+        if video_view.view_count >= 5:
+            return Response(
+                {"detail": f"View limit reached for video: {video.title}"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        video_view.view_count += 1
+        video_view.save()
+        
+        return Response(
+            {"detail": "View count increased.", "video_url": video.video_file.url},
+            status=status.HTTP_200_OK
+        )
+
 
 from rest_framework import viewsets
 
