@@ -1,7 +1,7 @@
 from .views import RegisterAPI, LoginAPI
 from django.urls import path, include
 from knox import views as knox_views 
-from .views import RegisterAPI, LoginAPI, TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
+from .views import RegisterAPI, LoginAPI,VideoDeleteAPIView, TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -17,5 +17,5 @@ urlpatterns = [
     path('api/videos/<int:pk>/', VideoDetailAPI.as_view(), name='video-detail'),
     path('api/videos/<str:subject>/<str:subject_type>/<str:grade>/<str:teacher>/', VideoListAPIView.as_view(), name='video-list'),
     path('videos/<int:video_id>/track-view/', TrackViewAPIView.as_view(), name='track-view'),
-
+    path('videos/<int:id>/delete/', VideoDeleteAPIView.as_view(), name='video-delete'),
 ]

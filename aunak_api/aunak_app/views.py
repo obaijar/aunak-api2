@@ -29,7 +29,8 @@ from rest_framework.views import APIView
 from knox.models import AuthToken
 from knox.auth import TokenAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
-
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 class LoginAPI(APIView):
     authentication_classes = ()
@@ -62,6 +63,15 @@ class VideoListCreateAPI(generics.ListCreateAPIView):
         if subject:
             queryset = queryset.filter(subject=subject)
         return queryset
+    
+@receiver(post_delete, sender=Video)
+def delete_video_file(sender, instance, **kwargs):
+    """
+    Deletes the video file associated with the deleted Video object.
+    """
+    if instance.video_file:
+        if instance.video_file.storage.exists(instance.video_file.name):
+            instance.video_file.delete(save=False)  
 
 class VideoDetailAPI(generics.RetrieveAPIView):
     queryset = Video.objects.all()
@@ -115,7 +125,22 @@ class TrackViewAPIView(generics.GenericAPIView):
             status=status.HTTP_200_OK
         )
 
+class VideoDeleteAPIView(generics.DestroyAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Video.objects.all()
+    lookup_field = 'id'
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Add any necessary permission checks here, e.g., check if user owns the video
+
+        # Delete the video file if needed
+        if instance.video_file:
+            instance.video_file.delete(save=False)
+
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 from rest_framework import viewsets
 
 class TeacherViewSet(viewsets.ModelViewSet):
