@@ -1,36 +1,38 @@
+from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Video , VideoView , Teacher , Course , Purchase
+from .models import Video, VideoView, Teacher, Course, Purchase
 # Create your views here.
-from rest_framework import generics,permissions
+from rest_framework import generics, permissions
 from rest_framework.response import Response
- 
-from .serializer import UserSerializer ,PurchaseSerializer,CourseSerializer, RegisterSerializer,VideoSerializer ,TeacherSerializer
+
+from .serializer import UserSerializer, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
-
-class RegisterAPI(generics.GenericAPIView):
-    serializer_class = RegisterSerializer  
-    permission_classes = (permissions.AllowAny,)
-    def post(self,request,*args,**kwargs):
-        serializer= self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response({
-            "user":UserSerializer(user,context= self.get_serializer_context()).data,
-            "token":AuthToken.objects.create(user)[1]
-        })
-
-
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import permissions, status
 from rest_framework.response import Response
-from rest_framework.views import APIView 
+from rest_framework.views import APIView
 from knox.models import AuthToken
 from knox.auth import TokenAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+
+
+class RegisterAPI(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": AuthToken.objects.create(user)[1]
+        })
+
 
 class LoginAPI(APIView):
     authentication_classes = ()
@@ -38,8 +40,8 @@ class LoginAPI(APIView):
 
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
-        password = request.data.get('password')  
-        user = authenticate(request, username=username, password=password) 
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
         if user:
             _, token = AuthToken.objects.create(user)
             return Response({
@@ -48,6 +50,8 @@ class LoginAPI(APIView):
                 'isadmin': user.is_staff
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class VideoListCreateAPI(generics.ListCreateAPIView):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
@@ -63,7 +67,8 @@ class VideoListCreateAPI(generics.ListCreateAPIView):
         if subject:
             queryset = queryset.filter(subject=subject)
         return queryset
-    
+
+
 @receiver(post_delete, sender=Video)
 def delete_video_file(sender, instance, **kwargs):
     """
@@ -71,7 +76,8 @@ def delete_video_file(sender, instance, **kwargs):
     """
     if instance.video_file:
         if instance.video_file.storage.exists(instance.video_file.name):
-            instance.video_file.delete(save=False)  
+            instance.video_file.delete(save=False)
+
 
 class VideoDetailAPI(generics.RetrieveAPIView):
     queryset = Video.objects.all()
@@ -87,7 +93,7 @@ class VideoListAPIView(generics.ListAPIView):
         grade = self.kwargs.get('grade')
         subject_type = self.kwargs.get('subject_type')
         teacher = self.kwargs.get('teacher')
-        return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type,teacher=teacher)
+        return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type, teacher=teacher)
     """def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         for video in queryset:
@@ -101,6 +107,8 @@ class VideoListAPIView(generics.ListAPIView):
             video_view.save()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)"""
+
+
 class TrackViewAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
@@ -110,8 +118,9 @@ class TrackViewAPIView(generics.GenericAPIView):
             video = Video.objects.get(id=video_id)
         except Video.DoesNotExist:
             return Response({"detail": "Video not found."}, status=status.HTTP_404_NOT_FOUND)
-        
-        video_view, created = VideoView.objects.get_or_create(user=request.user, video=video)
+
+        video_view, created = VideoView.objects.get_or_create(
+            user=request.user, video=video)
         if video_view.view_count >= 5:
             return Response(
                 {"detail": f"View limit reached for video: {video.title}"},
@@ -124,6 +133,7 @@ class TrackViewAPIView(generics.GenericAPIView):
             {"detail": "View count increased.", "video_url": video_url},
             status=status.HTTP_200_OK
         )
+
 
 class VideoDeleteAPIView(generics.DestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -140,25 +150,28 @@ class VideoDeleteAPIView(generics.DestroyAPIView):
 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-from rest_framework import viewsets
+
 
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
 
+
 class CourseListView(generics.ListAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+
 
 class PurchaseListView(generics.ListAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
 
+
 class PurchaseListCreateView(generics.ListCreateAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
-    
+
+
 class PurchaseDetailView(generics.RetrieveAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
