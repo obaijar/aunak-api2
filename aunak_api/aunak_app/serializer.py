@@ -1,6 +1,6 @@
 from rest_framework import serializers , generics
 from django.contrib.auth.models import User
-from .models import Video , Teacher
+from .models import Video , Teacher ,Course, Purchase
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,3 +32,21 @@ class VideoSerializer(serializers.ModelSerializer):
         model = Video
         fields = ['id', 'title', 'video_file', 'grade', 'subject','subject_type','teacher']
         read_only_fields = ['uploaded_by']
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    videos = VideoSerializer(many=True)
+
+    class Meta:
+        model = Course
+        fields = "__all__"
+
+class PurchaseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Purchase
+        fields = ['id', 'user', 'course', 'purchase_date']
+
+    def to_representation(self, instance):
+        self.fields['course'] = CourseSerializer()
+        self.fields['user'] = serializers.StringRelatedField()
+        return super(PurchaseSerializer, self).to_representation(instance)

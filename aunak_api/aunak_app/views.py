@@ -1,10 +1,10 @@
 from django.shortcuts import render
-from .models import Video , VideoView , Teacher
+from .models import Video , VideoView , Teacher , Course , Purchase
 # Create your views here.
 from rest_framework import generics,permissions
 from rest_framework.response import Response
  
-from .serializer import UserSerializer , RegisterSerializer,VideoSerializer ,TeacherSerializer
+from .serializer import UserSerializer ,PurchaseSerializer,CourseSerializer, RegisterSerializer,VideoSerializer ,TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 
@@ -146,3 +146,20 @@ from rest_framework import viewsets
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
+
+class CourseListView(generics.ListAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+class PurchaseListView(generics.ListAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
+
+class PurchaseListCreateView(generics.ListCreateAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
+    
+class PurchaseDetailView(generics.RetrieveAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
+    lookup_field = 'id'
