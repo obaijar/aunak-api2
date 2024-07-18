@@ -1,7 +1,7 @@
 from .views import RegisterAPI, LoginAPI
 from django.urls import path, include
 from knox import views as knox_views 
-from .views import RegisterAPI, LoginAPI,PurchaseListCreateView,PurchaseDetailView,PurchaseListView,VideoDeleteAPIView, CourseListView,TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
+from .views import RegisterAPI, LoginAPI,CourseCreateView,UserPurchasesListView,PurchaseListCreateView,PurchaseDetailView,VideoDeleteAPIView, CourseListView,TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -16,10 +16,11 @@ urlpatterns = [
     path('api/videos_upload/', VideoListCreateAPI.as_view(), name='video-list-create'),
     path('api/videos/<int:pk>/', VideoDetailAPI.as_view(), name='video-detail'),
     path('api/videos/<str:subject>/<str:subject_type>/<str:grade>/<str:teacher>/', VideoListAPIView.as_view(), name='video-list'),
-    path('videos/<int:video_id>/track-view/', TrackViewAPIView.as_view(), name='track-view'),
+    path('videos/<int:video_id>/track-view/', TrackViewAPIView.as_view(), name='track-view'),# when the user open the video ....
     path('videos/<int:id>/delete/', VideoDeleteAPIView.as_view(), name='video-delete'),
     path('api/courses/', CourseListView.as_view(), name='course_list'),
-    path('api/purchases/', PurchaseListView.as_view(), name='purchase_list'),
-    path('api/purchases2/', PurchaseListCreateView.as_view(), name='purchase_list'),
+    path('api/courses/create/', CourseCreateView.as_view(), name='course-create'),
+    path('api/purchases/', PurchaseListCreateView.as_view(), name='purchase_list'),
     path('api/purchases/<int:id>/', PurchaseDetailView.as_view(), name='purchase_detail'),
+    path('purchases/user/<int:user_id>/', UserPurchasesListView.as_view(), name='user-purchases-list'),
 ]

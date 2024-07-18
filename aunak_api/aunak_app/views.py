@@ -5,7 +5,7 @@ from .models import Video, VideoView, Teacher, Course, Purchase
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from .serializer import UserSerializer, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import UserSerializer, CourseSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
@@ -45,6 +45,7 @@ class LoginAPI(APIView):
         if user:
             _, token = AuthToken.objects.create(user)
             return Response({
+                'user_id': user.id,
                 'user': user.username,
                 'token': token,
                 'isadmin': user.is_staff
@@ -162,10 +163,6 @@ class CourseListView(generics.ListAPIView):
     serializer_class = CourseSerializer
 
 
-class PurchaseListView(generics.ListAPIView):
-    queryset = Purchase.objects.all()
-    serializer_class = PurchaseSerializer
-
 
 class PurchaseListCreateView(generics.ListCreateAPIView):
     queryset = Purchase.objects.all()
@@ -176,3 +173,14 @@ class PurchaseDetailView(generics.RetrieveAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
     lookup_field = 'id'
+
+class UserPurchasesListView(generics.ListAPIView):
+    serializer_class = PurchaseSerializer
+
+    def get_queryset(self):
+        user_id = self.kwargs['user_id']
+        return Purchase.objects.filter(user_id=user_id)
+
+class CourseCreateView(generics.CreateAPIView):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer2
