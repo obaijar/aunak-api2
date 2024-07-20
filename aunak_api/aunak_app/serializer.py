@@ -1,17 +1,35 @@
-from rest_framework import serializers , generics
+from rest_framework import serializers, generics
 from django.contrib.auth.models import User
-from .models import Video , Teacher ,Course, Purchase
+from .models import Video, Teacher, Course, Purchase, Subject, Grade
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('id', 'username', 'email')
 
+
+class SubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subject
+        fields = "__all__"
+
+
+class GradeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Grade
+        fields = "__all__"
+
+
 class TeacherSerializer(serializers.ModelSerializer):
+    subjects = SubjectSerializer(many=True, read_only=True)
+    grades = GradeSerializer(many=True, read_only=True)
+
     class Meta:
         model = Teacher
-        fields = ('id', 'name', 'age') 
-    
+        fields = "__all__"
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     is_admin = serializers.BooleanField(write_only=True)
 
@@ -27,10 +45,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
+
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title', 'video_file', 'grade', 'subject','subject_type','teacher']
+        fields = ['id', 'title', 'video_file', 'grade',
+                  'subject', 'subject_type', 'teacher']
         read_only_fields = ['uploaded_by']
 
 
@@ -40,12 +60,14 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = "__all__"
-    
+
+
 class CourseSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Course
         fields = "__all__"
+
 
 class PurchaseSerializer(serializers.ModelSerializer):
     class Meta:
