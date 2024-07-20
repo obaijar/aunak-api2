@@ -22,5 +22,5 @@ urlpatterns = [
     path('api/courses/create/', CourseCreateView.as_view(), name='course-create'),
     path('api/purchases/', PurchaseListCreateView.as_view(), name='purchase_list'),
     path('api/purchases/<int:id>/', PurchaseDetailView.as_view(), name='purchase_detail'),
-    path('purchases/user/<int:user_id>/', UserPurchasesListView.as_view(), name='user-purchases-list'),
+    path('purchases/user/<int:user_id>/', UserPurchasesListView.as_view(), name='user-purchases-list'),#see the purchaesd courses for a user
 ]

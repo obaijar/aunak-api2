@@ -120,6 +120,14 @@ class TrackViewAPIView(generics.GenericAPIView):
         except Video.DoesNotExist:
             return Response({"detail": "Video not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if request.user.is_staff:
+            # Admin user, no view count increment
+            video_url = request.build_absolute_uri(video.video_file.url)
+            return Response(
+                {"detail": "Admin access, view count not incremented.", "video_url": video_url},
+                status=status.HTTP_200_OK
+            )
+
         video_view, created = VideoView.objects.get_or_create(
             user=request.user, video=video)
         if video_view.view_count >= 5:
