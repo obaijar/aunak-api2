@@ -3,18 +3,35 @@ from django.contrib.auth.models import User
 
 
 class Subject(models.Model):
-    name = models.CharField(max_length=255)
+    SUBJECT_CHOICES = [
+        ('physics', 'Physics'),
+        ('math', 'Math'),
+        ('arabic', 'Arabic'),
+        ('Philosophy', 'Philosophy'),
+        ('Social Studies', 'Social Studies'),
+    ]
+
+    name = models.CharField(
+        max_length=100, choices=SUBJECT_CHOICES, default='physics')
 
     def __str__(self):
         return self.name
 
+
 class Grade(models.Model):
-    level = models.CharField(max_length=255)
+    GRADE_CHOICES = [
+        ('9', '9th Grade'),
+        ('12', '12th Grade 3lme'),
+        ('13', '12th Grade adabe'),
+    ]
+    level = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
 
     def __str__(self):
         return self.level
 
+
 class Teacher(models.Model):
+
     name = models.CharField(max_length=255)
     age = models.CharField(max_length=255)
     subjects = models.ManyToManyField(Subject, related_name='teachers')

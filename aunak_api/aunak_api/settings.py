@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-a8w8+z!)b3dv(72@*v9at$=pr&8&qyl489(n*#j^$pz2c7c*@9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["obai.aunakit-hosting.com", "www.obai.aunakit-hosting.com", "*"]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

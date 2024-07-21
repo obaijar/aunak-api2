@@ -1,7 +1,7 @@
 from .views import RegisterAPI, LoginAPI
 from django.urls import path, include
 from knox import views as knox_views 
-from .views import RegisterAPI, LoginAPI,CourseCreateView,UserPurchasesListView,PurchaseListCreateView,PurchaseDetailView,VideoDeleteAPIView, CourseListView,TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
+from .views import RegisterAPI, LoginAPI,TeacherListView,CourseCreateView,UserPurchasesListView,PurchaseListCreateView,PurchaseDetailView,VideoDeleteAPIView, CourseListView,TrackViewAPIView,VideoListCreateAPI, TeacherViewSet,VideoDetailAPI,VideoListAPIView
 from rest_framework.routers import DefaultRouter
 
 router = DefaultRouter()
@@ -23,4 +23,5 @@ urlpatterns = [
     path('api/purchases/', PurchaseListCreateView.as_view(), name='purchase_list'),
     path('api/purchases/<int:id>/', PurchaseDetailView.as_view(), name='purchase_detail'),
     path('purchases/user/<int:user_id>/', UserPurchasesListView.as_view(), name='user-purchases-list'),#see the purchaesd courses for a user
+    path('api/teachers/<str:grade>/<str:subject>/', TeacherListView.as_view(), name='teacher-list'),
 ]

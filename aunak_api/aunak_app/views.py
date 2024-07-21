@@ -192,3 +192,17 @@ class UserPurchasesListView(generics.ListAPIView):
 class CourseCreateView(generics.CreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer2
+
+class TeacherListView(generics.ListAPIView):
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        # Get grade and subject from URL parameters
+        grade_level = self.kwargs['grade']
+        subject_name = self.kwargs['subject']
+
+        # Filter teachers by the given grade and subject
+        return Teacher.objects.filter(
+            grades__level=grade_level,
+            subjects__name=subject_name
+        ).distinct()
