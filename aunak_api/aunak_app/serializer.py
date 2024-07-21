@@ -78,3 +78,19 @@ class PurchaseSerializer(serializers.ModelSerializer):
         self.fields['course'] = CourseSerializer()
         self.fields['user'] = serializers.StringRelatedField()
         return super(PurchaseSerializer, self).to_representation(instance)
+    
+class TeacherSerializer2(serializers.ModelSerializer):
+    subjects = serializers.SlugRelatedField(slug_field='name', queryset=Subject.objects.all(), many=True)
+    grades = serializers.SlugRelatedField(slug_field='level', queryset=Grade.objects.all(), many=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['name', 'age', 'subjects', 'grades']
+
+    def create(self, validated_data):
+        subjects_data = validated_data.pop('subjects')
+        grades_data = validated_data.pop('grades')
+        teacher = Teacher.objects.create(**validated_data)
+        teacher.subjects.set(subjects_data)
+        teacher.grades.set(grades_data)
+        return teacher

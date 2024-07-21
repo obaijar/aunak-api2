@@ -5,7 +5,7 @@ from .models import Video, VideoView, Teacher, Course, Purchase
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from .serializer import UserSerializer, CourseSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import UserSerializer, CourseSerializer2,TeacherSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
@@ -206,3 +206,7 @@ class TeacherListView(generics.ListAPIView):
             grades__level=grade_level,
             subjects__name=subject_name
         ).distinct()
+    
+class TeacherCreateView(generics.CreateAPIView):
+    queryset = Teacher.objects.all()
+    serializer_class = TeacherSerializer2
