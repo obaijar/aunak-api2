@@ -2,22 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class Subject(models.Model):
-    SUBJECT_CHOICES = [
-        ('physics', 'Physics'),
-        ('math', 'Math'),
-        ('arabic', 'Arabic'),
-        ('Philosophy', 'Philosophy'),
-        ('Social Studies', 'Social Studies'),
-    ]
-
-    name = models.CharField(
-        max_length=100, choices=SUBJECT_CHOICES, default='physics')
-
-    def __str__(self):
-        return self.name
-
-
 class Grade(models.Model):
     GRADE_CHOICES = [
         ('9', '9th Grade'),
@@ -28,6 +12,31 @@ class Grade(models.Model):
 
     def __str__(self):
         return self.level
+
+
+class Subject(models.Model):
+   # SUBJECT_CHOICES = [
+    #   ('physics', 'Physics'),
+    # ('math', 'Math'),
+    #   ('arabic', 'Arabic'),
+    #  ('Philosophy', 'Philosophy'),
+    #  ('Social Studies', 'Social Studies'),
+   # ]
+
+    # name = models.CharField(
+    #    max_length=100, choices=SUBJECT_CHOICES, default='physics')
+    name = models.CharField(max_length=255)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
+class Subject_type(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class Teacher(models.Model):
@@ -75,6 +84,10 @@ class Course(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     videos = models.ManyToManyField(Video)
+    subject_type = models.ForeignKey(Subject_type, on_delete=models.CASCADE)
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title

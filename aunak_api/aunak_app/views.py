@@ -1,11 +1,11 @@
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Video, VideoView, Teacher, Course, Purchase
+from .models import Video, VideoView, Teacher, Course, Purchase , Subject,Grade
 # Create your views here.
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from .serializer import UserSerializer, CourseSerializer2,TeacherSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import UserSerializer, CourseSerializer2,SubjectSerializer,GradeSerializer,TeacherSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
@@ -210,3 +210,44 @@ class TeacherListView(generics.ListAPIView):
 class TeacherCreateView(generics.CreateAPIView):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer2
+
+class GradeListView(generics.ListAPIView):
+    queryset = Grade.objects.all()
+    serializer_class = GradeSerializer   
+
+class SubjectListView(generics.ListAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer  
+
+class SubjectCreateView(generics.CreateAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer 
+
+class CourseSearchView(generics.ListAPIView):
+    serializer_class = CourseSerializer
+
+    def get_queryset(self):
+        queryset = Course.objects.all()
+        grade = self.kwargs.get('grade')
+        subject = self.kwargs.get('subject')
+        teacher = self.kwargs.get('teacher')
+        subject_type = self.kwargs.get('subject_type')
+
+        if grade is not None:
+            queryset = queryset.filter(grade_id=grade)
+        if subject is not None:
+            queryset = queryset.filter(subject_id=subject)
+        if teacher is not None:
+            queryset = queryset.filter(teacher_id=teacher)
+        if subject_type is not None:
+            queryset = queryset.filter(subject_type_id=subject_type)
+        
+        return queryset
+    
+class SubjectSearchView(generics.ListAPIView):
+    serializer_class = SubjectSerializer
+
+    def get_queryset(self):
+        grade_id = self.kwargs.get('grade')
+        queryset = Subject.objects.filter(grade_id=grade_id)
+        return queryset
