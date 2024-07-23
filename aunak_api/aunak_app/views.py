@@ -19,6 +19,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 
 
 class RegisterAPI(generics.GenericAPIView):
@@ -27,12 +28,17 @@ class RegisterAPI(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return Response({
-            "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "token": AuthToken.objects.create(user)[1]
-        })
+        try:
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            return Response({
+                "user": UserSerializer(user, context=self.get_serializer_context()).data,
+                "token": AuthToken.objects.create(user)[1]
+            })
+        except ValidationError as e:
+            if 'username' in e.detail:
+                return Response({"detail": "A user with this username already exists."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LoginAPI(APIView):
