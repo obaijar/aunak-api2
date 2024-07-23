@@ -26,7 +26,7 @@ urlpatterns = [
          VideoDeleteAPIView.as_view(), name='video-delete'),
     path('api/courses/', CourseListView.as_view(), name='course_list'),
     path('api/courses/create/', CourseCreateView.as_view(), name='course-create'),
-    path('api/courses/search/<int:grade>/<int:subject>/<int:subject_type>/<int:teacher>/',
+    path('api/courses/search/<int:grade>/<str:subject>/<int:subject_type>/<int:teacher>/',
          CourseSearchView.as_view(), name='course-search'),
 
     path('api/purchases/', PurchaseListCreateView.as_view(), name='purchase_list'),

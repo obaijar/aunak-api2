@@ -18,6 +18,7 @@ from knox.auth import TokenAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.shortcuts import get_object_or_404
 
 
 class RegisterAPI(generics.GenericAPIView):
@@ -223,6 +224,7 @@ class SubjectCreateView(generics.CreateAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer 
 
+
 class CourseSearchView(generics.ListAPIView):
     serializer_class = CourseSerializer
 
@@ -236,7 +238,8 @@ class CourseSearchView(generics.ListAPIView):
         if grade is not None:
             queryset = queryset.filter(grade_id=grade)
         if subject is not None:
-            queryset = queryset.filter(subject_id=subject)
+            subject_instance = get_object_or_404(Subject, name=subject)
+            queryset = queryset.filter(subject_id=subject_instance.id)
         if teacher is not None:
             queryset = queryset.filter(teacher_id=teacher)
         if subject_type is not None:
