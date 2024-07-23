@@ -171,7 +171,7 @@ class VideoDeleteAPIView(generics.DestroyAPIView):
 class TeacherViewSet(viewsets.ModelViewSet):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer
-
+    permission_classes = [permissions.AllowAny]
 
 class CourseListView(generics.ListAPIView):
     queryset = Course.objects.all()
@@ -202,7 +202,7 @@ class CourseCreateView(generics.CreateAPIView):
 
 class TeacherListView(generics.ListAPIView):
     serializer_class = TeacherSerializer
-
+    permission_classes = [permissions.AllowAny]
     def get_queryset(self):
         # Get grade and subject from URL parameters
         grade_level = self.kwargs['grade']
@@ -225,6 +225,7 @@ class GradeListView(generics.ListAPIView):
 class SubjectListView(generics.ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer  
+    permission_classes = [permissions.AllowAny]
 
 class SubjectCreateView(generics.CreateAPIView):
     queryset = Subject.objects.all()
@@ -255,8 +256,9 @@ class CourseSearchView(generics.ListAPIView):
     
 class SubjectSearchView(generics.ListAPIView):
     serializer_class = SubjectSerializer
-
+    permission_classes = [permissions.AllowAny]
     def get_queryset(self):
         grade_id = self.kwargs.get('grade')
         queryset = Subject.objects.filter(grade_id=grade_id)
         return queryset
+    
