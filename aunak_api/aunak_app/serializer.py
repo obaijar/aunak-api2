@@ -1,6 +1,6 @@
 from rest_framework import serializers, generics
 from django.contrib.auth.models import User
-from .models import Video, Teacher, Course, Purchase, Subject, Grade
+from .models import Video, Teacher, Course, Purchase, Subject, Grade,Subject_type
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,6 +14,10 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = "__all__"
 
+class SubjectTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subject_type
+        fields = "__all__"
 
 class GradeSerializer(serializers.ModelSerializer):
     class Meta:

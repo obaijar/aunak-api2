@@ -1,11 +1,11 @@
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Video, VideoView, Teacher, Course, Purchase , Subject,Grade
+from .models import Video, VideoView, Teacher,Subject_type, Course, Purchase, Subject, Grade
 # Create your views here.
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 
-from .serializer import UserSerializer, CourseSerializer2,SubjectSerializer,GradeSerializer,TeacherSerializer2,PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import SubjectTypeSerializer, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
@@ -92,6 +92,11 @@ class VideoDetailAPI(generics.RetrieveAPIView):
     serializer_class = VideoSerializer
 
 
+class VideoListView(generics.ListAPIView):
+    queryset = Video.objects.all()
+    serializer_class = VideoSerializer
+
+
 class VideoListAPIView(generics.ListAPIView):
     serializer_class = VideoSerializer
     permission_classes = [IsAuthenticated]
@@ -131,7 +136,8 @@ class TrackViewAPIView(generics.GenericAPIView):
             # Admin user, no view count increment
             video_url = request.build_absolute_uri(video.video_file.url)
             return Response(
-                {"detail": "Admin access, view count not incremented.", "video_url": video_url},
+                {"detail": "Admin access, view count not incremented.",
+                    "video_url": video_url},
                 status=status.HTTP_200_OK
             )
 
@@ -173,10 +179,10 @@ class TeacherViewSet(viewsets.ModelViewSet):
     serializer_class = TeacherSerializer
     permission_classes = [permissions.AllowAny]
 
+
 class CourseListView(generics.ListAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-
 
 
 class PurchaseListCreateView(generics.ListCreateAPIView):
@@ -189,6 +195,15 @@ class PurchaseDetailView(generics.RetrieveAPIView):
     serializer_class = PurchaseSerializer
     lookup_field = 'id'
 
+
+class PurchaseDeleteView(generics.DestroyAPIView):
+    queryset = Purchase.objects.all()
+    serializer_class = PurchaseSerializer
+    lookup_field = 'id'
+    # Optionally set permissions
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class UserPurchasesListView(generics.ListAPIView):
     serializer_class = PurchaseSerializer
 
@@ -196,13 +211,16 @@ class UserPurchasesListView(generics.ListAPIView):
         user_id = self.kwargs['user_id']
         return Purchase.objects.filter(user_id=user_id)
 
+
 class CourseCreateView(generics.CreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer2
 
+
 class TeacherListView(generics.ListAPIView):
     serializer_class = TeacherSerializer
     permission_classes = [permissions.AllowAny]
+
     def get_queryset(self):
         # Get grade and subject from URL parameters
         grade_level = self.kwargs['grade']
@@ -213,23 +231,33 @@ class TeacherListView(generics.ListAPIView):
             grades__level=grade_level,
             subjects__name=subject_name
         ).distinct()
-    
+
+
 class TeacherCreateView(generics.CreateAPIView):
     queryset = Teacher.objects.all()
     serializer_class = TeacherSerializer2
 
+
 class GradeListView(generics.ListAPIView):
     queryset = Grade.objects.all()
-    serializer_class = GradeSerializer   
+    serializer_class = GradeSerializer
+    permission_classes = [permissions.AllowAny]
 
 class SubjectListView(generics.ListAPIView):
     queryset = Subject.objects.all()
-    serializer_class = SubjectSerializer  
+    serializer_class = SubjectSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class SubjectTypeListView(generics.ListAPIView):
+    queryset = Subject_type.objects.all()
+    serializer_class = SubjectTypeSerializer
+    permission_classes = [permissions.AllowAny]
+
 
 class SubjectCreateView(generics.CreateAPIView):
     queryset = Subject.objects.all()
-    serializer_class = SubjectSerializer 
+    serializer_class = SubjectSerializer
 
 
 class CourseSearchView(generics.ListAPIView):
@@ -251,14 +279,15 @@ class CourseSearchView(generics.ListAPIView):
             queryset = queryset.filter(teacher_id=teacher)
         if subject_type is not None:
             queryset = queryset.filter(subject_type_id=subject_type)
-        
+
         return queryset
-    
+
+
 class SubjectSearchView(generics.ListAPIView):
     serializer_class = SubjectSerializer
     permission_classes = [permissions.AllowAny]
+
     def get_queryset(self):
         grade_id = self.kwargs.get('grade')
         queryset = Subject.objects.filter(grade_id=grade_id)
         return queryset
-    
