@@ -1,10 +1,10 @@
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Video, VideoView, Teacher,Subject_type, Course, Purchase, Subject, Grade
+from .models import Video, VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
 # Create your views here.
 from rest_framework import generics, permissions
 from rest_framework.response import Response
-
+from rest_framework.decorators import api_view
 from .serializer import SubjectTypeSerializer, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
@@ -185,6 +185,15 @@ class CourseListView(generics.ListAPIView):
     serializer_class = CourseSerializer
 
 
+class CourseViewSet(viewsets.ModelViewSet):
+    queryset = Course.objects.all()
+    serializer_class = CourseSerializer
+
+    def update(self, request, *args, **kwargs):
+        # Your custom update logic here
+        return super().update(request, *args, **kwargs)
+
+
 class PurchaseListCreateView(generics.ListCreateAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
@@ -243,6 +252,7 @@ class GradeListView(generics.ListAPIView):
     serializer_class = GradeSerializer
     permission_classes = [permissions.AllowAny]
 
+
 class SubjectListView(generics.ListAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
@@ -281,6 +291,30 @@ class CourseSearchView(generics.ListAPIView):
             queryset = queryset.filter(subject_type_id=subject_type)
 
         return queryset
+
+
+@api_view(['PATCH'])
+def update_course(request, pk):
+    try:
+        course = Course.objects.get(pk=pk)
+    except Course.DoesNotExist:
+        return Response({'detail': 'Course not found'}, status=status.not_found)
+
+    serializer = CourseSerializer(course, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+def delete_course(request, course_id):
+    try:
+        course = Course.objects.get(id=course_id)
+        course.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Course.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 class SubjectSearchView(generics.ListAPIView):
