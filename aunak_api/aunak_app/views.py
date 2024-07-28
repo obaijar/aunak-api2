@@ -1,3 +1,6 @@
+import dropbox
+from rest_framework.decorators import permission_classes
+from django.conf import settings
 from rest_framework import viewsets
 from django.shortcuts import render
 from .models import Video, VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
@@ -5,7 +8,7 @@ from .models import Video, VideoView, Teacher, Subject_type, Course, Purchase, S
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .serializer import SubjectTypeSerializer, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import SubjectTypeSerializer, VideoSerializer2, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
@@ -59,6 +62,7 @@ class LoginAPI(APIView):
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+
 class ChangePasswordAPI(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
@@ -81,6 +85,7 @@ class ChangePasswordAPI(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
+
 
 class VideoListCreateAPI(generics.ListCreateAPIView):
     queryset = Video.objects.all()
@@ -334,3 +339,123 @@ class SubjectSearchView(generics.ListAPIView):
         grade_id = self.kwargs.get('grade')
         queryset = Subject.objects.filter(grade_id=grade_id)
         return queryset
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def upload_video(request):
+    if request.method == 'POST':
+        title = request.data.get('title')
+        grade = request.data.get('grade')
+        subject = request.data.get('subject')
+        subject_type = request.data.get('subject_type')
+        teacher_id = request.data.get('teacher')
+        video_file = request.FILES['video_file']
+
+        # Get the teacher instance
+        try:
+            teacher = Teacher.objects.get(id=teacher_id)
+        except Teacher.DoesNotExist:
+            return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Upload video to Dropbox
+        dbx = dropbox.Dropbox(settings.DROPBOX_ACCESS_TOKEN)
+        dropbox_path = f'/videos/{video_file.name}'
+
+        try:
+            dbx.files_upload(video_file.read(), dropbox_path)
+        except dropbox.exceptions.ApiError as err:
+            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Create video instance
+        video = Video(
+            title=title,
+            video_file_path=dropbox_path,
+            grade=grade,
+            subject=subject,
+            subject_type=subject_type,
+            teacher=teacher,
+            uploaded_by=request.user
+        )
+        video.save()
+
+        return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_video(request):
+    grade = request.data.get('grade')
+    subject = request.data.get('subject')
+    subject_type = request.data.get('subject_type')
+    teacher_id = request.data.get('teacher')
+
+    if not all([grade, subject, subject_type, teacher_id]):
+        return Response({'error': 'Missing query parameters'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        teacher = Teacher.objects.get(id=teacher_id)
+    except Teacher.DoesNotExist:
+        return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        video = Video.objects.get(grade=grade, subject=subject, subject_type=subject_type, teacher=teacher)
+    except Video.DoesNotExist:
+        return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Fetch the video from Dropbox
+    dbx = dropbox.Dropbox(settings.DROPBOX_ACCESS_TOKEN)
+    dropbox_path = video.video_file_path
+    try:
+        # Check if a shared link already exists
+        links = dbx.sharing_list_shared_links(path=dropbox_path)
+        if links.links:
+            shared_link = links.links[0].url
+        else:
+            # Create a shared link with settings
+            shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
+            shared_link = shared_link_metadata.url
+
+        # Modify the shared link to enable direct video preview
+        preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+    except dropbox.exceptions.ApiError as err:
+        return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    video_data = VideoSerializer2(video).data
+    video_data['dropbox_link'] = preview_link
+
+    return Response(video_data, status=status.HTTP_200_OK)
+
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_all_videos(request):
+    videos = Video.objects.all()
+    dbx = dropbox.Dropbox(settings.DROPBOX_ACCESS_TOKEN)
+    video_list = []
+
+    for video in videos:
+        dropbox_path = video.video_file_path
+        try:
+            # Check if a shared link already exists
+            links = dbx.sharing_list_shared_links(path=dropbox_path)
+            if links.links:
+                shared_link = links.links[0].url
+            else:
+                # Create a shared link with settings
+                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(
+                    dropbox_path)
+                shared_link = shared_link_metadata.url
+
+            # Modify the shared link to enable direct video preview
+            preview_link = shared_link.replace(
+                'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+        except dropbox.exceptions.ApiError as err:
+            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        video_data = VideoSerializer2(video).data
+        video_data['dropbox_link'] = preview_link
+        video_list.append(video_data)
+
+    return Response(video_list, status=status.HTTP_200_OK)

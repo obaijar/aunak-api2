@@ -57,6 +57,11 @@ class VideoSerializer(serializers.ModelSerializer):
                   'subject', 'subject_type', 'teacher']
         read_only_fields = ['uploaded_by']
 
+class VideoSerializer2(serializers.ModelSerializer):
+
+    class Meta:
+        model = Video
+        fields = "__all__"
 
 class CourseSerializer(serializers.ModelSerializer):
     videos = VideoSerializer(many=True)

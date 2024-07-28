@@ -137,6 +137,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+DROPBOX_ACCESS_TOKEN = 'sl.B57S8QQ1xpsmyriJXvDenTy6_uioAw53zcpuP3sKnlTdF_7P5hShPVb7CT8Bcs52GgSABBuO72Pi7gPpzKWVAXisSyksjZDELzbQOMHzB98_pqcdTpzxzmaFEPsaCp8Mr9dukj67vq45XLE'
 REST_KNOX = {
     'TOKEN_TTL': None  # This makes the token last indefinitely
 }

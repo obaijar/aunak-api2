@@ -67,7 +67,7 @@ class Video(models.Model):
     ]
 
     title = models.CharField(max_length=255)
-    video_file = models.FileField(upload_to='videos/')
+    video_file_path = models.CharField(max_length=1024) 
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
     subject = models.CharField(
         max_length=7, choices=SUBJECT_CHOICES, default='physics')
