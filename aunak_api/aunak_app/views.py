@@ -59,6 +59,28 @@ class LoginAPI(APIView):
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
+class ChangePasswordAPI(APIView):
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        # Check if current password is correct
+        if not user.check_password(current_password):
+            return Response({'error': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate new password
+        try:
+            user.set_password(new_password)
+            user.full_clean()  # This will run validators, such as password validation
+            user.save()
+        except ValidationError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'success': 'Password changed successfully'}, status=status.HTTP_200_OK)
 
 class VideoListCreateAPI(generics.ListCreateAPIView):
     queryset = Video.objects.all()
@@ -107,19 +129,6 @@ class VideoListAPIView(generics.ListAPIView):
         subject_type = self.kwargs.get('subject_type')
         teacher = self.kwargs.get('teacher')
         return Video.objects.filter(subject=subject, grade=grade, subject_type=subject_type, teacher=teacher)
-    """def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        for video in queryset:
-            video_view, created = VideoView.objects.get_or_create(user=request.user, video=video)
-            if video_view.view_count >= 5:
-                return Response(
-                    {"detail": f"View limit reached for video: {video.title}"},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-            video_view.view_count += 1
-            video_view.save()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)"""
 
 
 class TrackViewAPIView(generics.GenericAPIView):
