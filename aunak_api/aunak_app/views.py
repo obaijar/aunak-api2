@@ -127,15 +127,15 @@ class VideoListCreateAPI(generics.ListCreateAPIView):
             queryset = queryset.filter(subject=subject)
         return queryset
 
-
+"""
 @receiver(post_delete, sender=Video)
 def delete_video_file(sender, instance, **kwargs):
-    """
-    Deletes the video file associated with the deleted Video object.
-    """
+     
+    #Deletes the video file associated with the deleted Video object.
+    
     if instance.video_file:
         if instance.video_file.storage.exists(instance.video_file.name):
-            instance.video_file.delete(save=False)
+            instance.video_file.delete(save=False)"""
 
 
 class VideoDetailAPI(generics.RetrieveAPIView):
@@ -509,3 +509,36 @@ def get_all_videos(request):
         video_list.append(video_data)
 
     return Response(video_list, status=status.HTTP_200_OK)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_video(request, video_id):
+    try:
+        # Fetch the video instance
+        video = Video.objects.get(id=video_id)
+    except Video.DoesNotExist:
+        return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Check if the requesting user is the one who uploaded the video or is an admin
+    if video.uploaded_by != request.user and not request.user.is_staff:
+        return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+    dropbox_path = video.video_file_path
+
+    try:
+        dbx = get_dropbox_client()
+        dbx.files_delete_v2(dropbox_path)
+    except dropbox.exceptions.AuthError:
+        refresh_dropbox_token()
+        dbx = get_dropbox_client()
+        try:
+            dbx.files_delete_v2(dropbox_path)
+        except dropbox.exceptions.ApiError as err:
+            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except dropbox.exceptions.ApiError as err:
+        return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # Delete the video instance from the database
+    video.delete()
+
+    return Response({'success': 'Video deleted successfully'}, status=status.HTTP_200_OK)
