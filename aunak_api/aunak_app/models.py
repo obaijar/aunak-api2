@@ -2,6 +2,17 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class DropboxToken(models.Model):
+    access_token = models.CharField(max_length=255)
+    refresh_token = models.CharField(max_length=255, blank=True, null=True)
+    token_type = models.CharField(max_length=50, blank=True, null=True)
+    expires_in = models.IntegerField(blank=True, null=True)
+    scope = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.access_token
+    
 class Grade(models.Model):
     GRADE_CHOICES = [
         ('9', '9th Grade'),
@@ -15,14 +26,13 @@ class Grade(models.Model):
 
 
 class Subject(models.Model):
-   # SUBJECT_CHOICES = [
+    # SUBJECT_CHOICES = [
     #   ('physics', 'Physics'),
     # ('math', 'Math'),
     #   ('arabic', 'Arabic'),
     #  ('Philosophy', 'Philosophy'),
     #  ('Social Studies', 'Social Studies'),
-   # ]
-
+    # ]
     # name = models.CharField(
     #    max_length=100, choices=SUBJECT_CHOICES, default='physics')
     name = models.CharField(max_length=255)

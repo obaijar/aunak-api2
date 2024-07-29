@@ -137,7 +137,8 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DROPBOX_ACCESS_TOKEN = 'sl.B57S8QQ1xpsmyriJXvDenTy6_uioAw53zcpuP3sKnlTdF_7P5hShPVb7CT8Bcs52GgSABBuO72Pi7gPpzKWVAXisSyksjZDELzbQOMHzB98_pqcdTpzxzmaFEPsaCp8Mr9dukj67vq45XLE'
-REST_KNOX = {
-    'TOKEN_TTL': None  # This makes the token last indefinitely
+DROPBOX_ACCESS_TOKEN = 'sl.B57MAinKMHzR9PKiHxuVEmezN2ivHg5ira-WE4qoQOz4wXIaC8O9Rmd-AaXd0EEHnlJ_8LVOlp787HoXJN_w9X0jzNvGXqMBSRKcYvVBZPrwpJZSvWz1qrRMKhOUyVpGojCHk4OUtINZHv0'
+KNOX = {
+    'TOKEN_TTL': None,  # Tokens do not expire
+    'AUTO_REFRESH': False,  # Optional: disable auto-refresh to keep tokens truly non-expiring
 }
