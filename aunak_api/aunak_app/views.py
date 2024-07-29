@@ -388,12 +388,11 @@ def upload_video(request):
             return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
         dropbox_path = f'/videos/{video_file.name}'
-
+        refresh_dropbox_token()
         try: 
             dbx = get_dropbox_client()
             dbx.files_upload(video_file.read(), dropbox_path)
         except dropbox.exceptions.AuthError:
-            
             refresh_dropbox_token()
             dbx = get_dropbox_client()
             try:
@@ -403,10 +402,34 @@ def upload_video(request):
         except dropbox.exceptions.ApiError as err:
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Create video instance
+        try:
+            links = dbx.sharing_list_shared_links(path=dropbox_path)
+            if links.links:
+                shared_link = links.links[0].url
+            else:
+                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
+                shared_link = shared_link_metadata.url
+
+            preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+        except dropbox.exceptions.AuthError:
+            refresh_dropbox_token()
+            dbx = get_dropbox_client()
+            try:
+                links = dbx.sharing_list_shared_links(path=dropbox_path)
+                if links.links:
+                    shared_link = links.links[0].url
+                else:
+                    shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
+                    shared_link = shared_link_metadata.url
+
+                preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+            except dropbox.exceptions.ApiError as err:
+                return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Create video instance with the preview link
         video = Video(
             title=title,
-            video_file_path=dropbox_path,
+            video_file_path=preview_link,  # Store the preview link
             grade=grade,
             subject=subject,
             subject_type=subject_type,
@@ -417,10 +440,9 @@ def upload_video(request):
 
         return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def get_video(request):
+def get_videos(request):
     grade = request.data.get('grade')
     subject = request.data.get('subject')
     subject_type = request.data.get('subject_type')
@@ -434,41 +456,17 @@ def get_video(request):
     except Teacher.DoesNotExist:
         return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    try:
-        video = Video.objects.get(grade=grade, subject=subject, subject_type=subject_type, teacher=teacher)
-    except Video.DoesNotExist:
+    videos = Video.objects.filter(grade=grade, subject=subject, subject_type=subject_type, teacher=teacher)
+    if not videos.exists():
         return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    dropbox_path = video.video_file_path
-    try:
-        dbx = get_dropbox_client()
-        links = dbx.sharing_list_shared_links(path=dropbox_path)
-        if links.links:
-            shared_link = links.links[0].url
-        else:
-            shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-            shared_link = shared_link_metadata.url
+    video_list = []
+    for video in videos:
+        video_data = VideoSerializer2(video).data
+        video_list.append(video_data)
 
-        preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-    except dropbox.exceptions.AuthError:
-        refresh_dropbox_token()
-        dbx = get_dropbox_client()
-        try:
-            links = dbx.sharing_list_shared_links(path=dropbox_path)
-            if links.links:
-                shared_link = links.links[0].url
-            else:
-                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-                shared_link = shared_link_metadata.url
+    return Response(video_list, status=status.HTTP_200_OK)
 
-            preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-        except dropbox.exceptions.ApiError as err:
-            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    video_data = VideoSerializer2(video).data
-    video_data['dropbox_link'] = preview_link
-
-    return Response(video_data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

@@ -1,7 +1,7 @@
 from .views import RegisterAPI, LoginAPI
 from django.urls import path, include
 from knox import views as knox_views
-from .views import RegisterAPI, UserListView, delete_video,UserDeleteView, get_all_videos, upload_video, get_video, update_course, ChangePasswordAPI, SubjectTypeListView, CourseViewSet, VideoListView, SubjectCreateView, PurchaseDeleteView, SubjectSearchView, SubjectListView, LoginAPI, CourseSearchView, GradeListView, TeacherListView, TeacherCreateView, CourseCreateView, UserPurchasesListView, PurchaseListCreateView, PurchaseDetailView, VideoDeleteAPIView, CourseListView, TrackViewAPIView, VideoListCreateAPI, TeacherViewSet, VideoDetailAPI, VideoListAPIView
+from .views import RegisterAPI, UserListView, delete_video,UserDeleteView, get_all_videos, upload_video, get_videos, update_course, ChangePasswordAPI, SubjectTypeListView, CourseViewSet, VideoListView, SubjectCreateView, PurchaseDeleteView, SubjectSearchView, SubjectListView, LoginAPI, CourseSearchView, GradeListView, TeacherListView, TeacherCreateView, CourseCreateView, UserPurchasesListView, PurchaseListCreateView, PurchaseDetailView, VideoDeleteAPIView, CourseListView, TrackViewAPIView, VideoListCreateAPI, TeacherViewSet, VideoDetailAPI, VideoListAPIView
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -19,7 +19,7 @@ urlpatterns = [
     path('api/login/', LoginAPI.as_view(), name='login'),
     path('api/change-password/', ChangePasswordAPI.as_view(), name='change-password'),
     path('upload-video/', upload_video, name='upload-video'),
-    path('get-video/', get_video, name='get-video'),
+    path('get-video/', get_videos, name='get-video'),
     path('get-all-videos/', get_all_videos, name='get-all-videos'),
     path('videos/delete/<int:video_id>/', delete_video, name='delete_video'),
     path('api/logout/', knox_views.LogoutView.as_view(), name='logout'),

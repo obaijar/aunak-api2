@@ -53,7 +53,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Video
-        fields = ['id', 'title', 'video_file', 'grade',
+        fields = ['id', 'title', 'video_file_path', 'grade',
                   'subject', 'subject_type', 'teacher']
         read_only_fields = ['uploaded_by']
 

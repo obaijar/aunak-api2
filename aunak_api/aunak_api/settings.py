@@ -142,3 +142,8 @@ KNOX = {
     'TOKEN_TTL': None,  # Tokens do not expire
     'AUTO_REFRESH': False,  # Optional: disable auto-refresh to keep tokens truly non-expiring
 }
+
+DROPBOX_APP_KEY = 'cdor7k5dqf8yzmx'
+DROPBOX_APP_SECRET = '33qfmldrceojsa2'
+DROPBOX_REFRESH_TOKEN = 'StR82FTonNkAAAAAAAAAAUgNLWE0yowWswoRXBvMkhFalJCMP9DdgHMG4XIP0nDT'
+ 
