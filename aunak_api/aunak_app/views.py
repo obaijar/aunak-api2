@@ -387,8 +387,7 @@ def upload_video(request):
         except Teacher.DoesNotExist:
             return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        dropbox_path = f'/videos/{video_file.name}'
-        refresh_dropbox_token()
+        dropbox_path = f'/videos/{video_file.name}' 
         try: 
             dbx = get_dropbox_client()
             dbx.files_upload(video_file.read(), dropbox_path)
@@ -472,39 +471,11 @@ def get_videos(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_all_videos(request):
+    # Fetch all video objects from the database
     videos = Video.objects.all()
-    video_list = []
-
-    for video in videos:
-        dropbox_path = video.video_file_path
-        try:
-            dbx = get_dropbox_client()
-            links = dbx.sharing_list_shared_links(path=dropbox_path)
-            if links.links:
-                shared_link = links.links[0].url
-            else:
-                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-                shared_link = shared_link_metadata.url
-
-            preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-        except dropbox.exceptions.AuthError:
-            refresh_dropbox_token()
-            dbx = get_dropbox_client()
-            try:
-                links = dbx.sharing_list_shared_links(path=dropbox_path)
-                if links.links:
-                    shared_link = links.links[0].url
-                else:
-                    shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-                    shared_link = shared_link_metadata.url
-
-                preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-            except dropbox.exceptions.ApiError as err:
-                return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        video_data = VideoSerializer2(video).data
-        video_data['dropbox_link'] = preview_link
-        video_list.append(video_data)
+    
+    # Serialize video data
+    video_list = VideoSerializer2(videos, many=True).data
 
     return Response(video_list, status=status.HTTP_200_OK)
 
