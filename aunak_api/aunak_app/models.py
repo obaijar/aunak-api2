@@ -77,6 +77,7 @@ class Video(models.Model):
     ]
 
     title = models.CharField(max_length=255)
+    preview_link = models.CharField(max_length=255)
     video_file_path = models.CharField(max_length=1024) 
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
     subject = models.CharField(
@@ -84,7 +85,7 @@ class Video(models.Model):
     subject_type = models.CharField(
         max_length=7, choices=SUBJECT_TYPE_CHOICES, default='1')
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE) 
 
     def __str__(self):
         return self.title

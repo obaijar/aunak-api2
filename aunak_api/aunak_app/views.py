@@ -425,13 +425,15 @@ def upload_video(request):
                 shared_link = shared_link_metadata.url
 
             preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+
         except dropbox.exceptions.ApiError as err:
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        # Create video instance with the preview link
+        # Create video instance with the original Dropbox path
         video = Video(
             title=title,
-            video_file_path=preview_link,
+            video_file_path=dropbox_path,  # Store the original Dropbox path
+            preview_link=preview_link,  # Optionally store the preview link
             grade=grade,
             subject=subject,
             subject_type=subject_type,
@@ -484,7 +486,6 @@ def get_all_videos(request):
 
     return Response(video_list, status=status.HTTP_200_OK)
 
-
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_video(request, video_id):
@@ -500,8 +501,19 @@ def delete_video(request, video_id):
 
     dropbox_path = video.video_file_path
 
+    # Ensure Dropbox client is ready
+    def get_valid_dropbox_client():
+        try:
+            dbx = get_dropbox_client()
+            # Test a simple operation to verify token validity
+            dbx.users_get_current_account()
+            return dbx
+        except dropbox.exceptions.AuthError:
+            refresh_dropbox_token()
+            return get_dropbox_client()
+
     try:
-        dbx = get_dropbox_client()
+        dbx = get_valid_dropbox_client()
         dbx.files_delete_v2(dropbox_path)
     except dropbox.exceptions.AuthError:
         refresh_dropbox_token()
