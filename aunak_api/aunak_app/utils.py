@@ -15,7 +15,8 @@ def refresh_dropbox_token():
     
     response = requests.post(url, data=data)
     
-    if response.status_code == 200: 
+    if response.status_code == 200:
+        print("hiii") 
         new_token = response.json()['access_token']
         # Update the token in settings
         settings.DROPBOX_ACCESS_TOKEN = new_token 

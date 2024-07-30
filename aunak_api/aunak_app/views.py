@@ -1,9 +1,12 @@
+from rest_framework.decorators import api_view, permission_classes
+from .utils import   refresh_dropbox_token
+from .models import Teacher, Video
 import dropbox
 from rest_framework.decorators import permission_classes
 from django.conf import settings
 from rest_framework import viewsets
 from django.shortcuts import render
-from .models import Video, DropboxToken,VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
+from .models import Video, DropboxToken, VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
 # Create your views here.
 from rest_framework import generics, permissions
 from rest_framework.response import Response
@@ -31,6 +34,7 @@ from rest_framework.authentication import BasicAuthentication
 from django.contrib.auth.models import User
 from .utils import refresh_dropbox_token
 
+
 class UserDeleteView(APIView):
     authentication_classes = [TokenAuthentication, BasicAuthentication]
     permission_classes = [IsAdminUser]
@@ -42,13 +46,15 @@ class UserDeleteView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
-        
+
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-            
+
+
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = RegisterSerializer
     permission_classes = (permissions.AllowAny,)
@@ -126,6 +132,7 @@ class VideoListCreateAPI(generics.ListCreateAPIView):
         if subject:
             queryset = queryset.filter(subject=subject)
         return queryset
+
 
 """
 @receiver(post_delete, sender=Video)
@@ -365,10 +372,12 @@ class SubjectSearchView(generics.ListAPIView):
         return queryset
 
 
-def get_dropbox_client(): 
+def get_dropbox_client():
     # Fetch the latest access token from the database
     token_instance = DropboxToken.objects.get(id=1)
     return dropbox.Dropbox(token_instance.access_token)
+
+ 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -379,29 +388,35 @@ def upload_video(request):
         subject = request.data.get('subject')
         subject_type = request.data.get('subject_type')
         teacher_id = request.data.get('teacher')
-        video_file = request.FILES['video_file']
-     
+        video_file = request.FILES.get('video_file')
+
+        if not video_file:
+            return Response({'error': 'No video file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
         # Get the teacher instance
         try:
             teacher = Teacher.objects.get(id=teacher_id)
         except Teacher.DoesNotExist:
             return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        dropbox_path = f'/videos/{video_file.name}' 
-        try: 
-            dbx = get_dropbox_client()
-            dbx.files_upload(video_file.read(), dropbox_path)
-        except dropbox.exceptions.AuthError:
-            refresh_dropbox_token()
-            dbx = get_dropbox_client()
-            try:
-                dbx.files_upload(video_file.read(), dropbox_path)
-            except dropbox.exceptions.ApiError as err:
-                return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except dropbox.exceptions.ApiError as err:
-            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        dropbox_path = f'/videos/{video_file.name}'
 
+        # Ensure Dropbox client is ready
+        def get_valid_dropbox_client():
+            try:
+                dbx = get_dropbox_client()
+                # Test a simple operation to verify token validity
+                dbx.users_get_current_account()
+                return dbx
+            except dropbox.exceptions.AuthError:
+                refresh_dropbox_token()
+                return get_dropbox_client()
+
+        dbx = get_valid_dropbox_client()
+
+        # Upload the video and get a shared link
         try:
+            dbx.files_upload(video_file.read(), dropbox_path)
             links = dbx.sharing_list_shared_links(path=dropbox_path)
             if links.links:
                 shared_link = links.links[0].url
@@ -410,25 +425,13 @@ def upload_video(request):
                 shared_link = shared_link_metadata.url
 
             preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-        except dropbox.exceptions.AuthError:
-            refresh_dropbox_token()
-            dbx = get_dropbox_client()
-            try:
-                links = dbx.sharing_list_shared_links(path=dropbox_path)
-                if links.links:
-                    shared_link = links.links[0].url
-                else:
-                    shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-                    shared_link = shared_link_metadata.url
-
-                preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-            except dropbox.exceptions.ApiError as err:
-                return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except dropbox.exceptions.ApiError as err:
+            return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         # Create video instance with the preview link
         video = Video(
             title=title,
-            video_file_path=preview_link,  # Store the preview link
+            video_file_path=preview_link,
             grade=grade,
             subject=subject,
             subject_type=subject_type,
@@ -438,6 +441,8 @@ def upload_video(request):
         video.save()
 
         return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -455,7 +460,8 @@ def get_videos(request):
     except Teacher.DoesNotExist:
         return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    videos = Video.objects.filter(grade=grade, subject=subject, subject_type=subject_type, teacher=teacher)
+    videos = Video.objects.filter(
+        grade=grade, subject=subject, subject_type=subject_type, teacher=teacher)
     if not videos.exists():
         return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -467,17 +473,17 @@ def get_videos(request):
     return Response(video_list, status=status.HTTP_200_OK)
 
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_all_videos(request):
     # Fetch all video objects from the database
     videos = Video.objects.all()
-    
+
     # Serialize video data
     video_list = VideoSerializer2(videos, many=True).data
 
     return Response(video_list, status=status.HTTP_200_OK)
+
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
@@ -487,7 +493,7 @@ def delete_video(request, video_id):
         video = Video.objects.get(id=video_id)
     except Video.DoesNotExist:
         return Response({'error': 'Video not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     # Check if the requesting user is the one who uploaded the video or is an admin
     if video.uploaded_by != request.user and not request.user.is_staff:
         return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
