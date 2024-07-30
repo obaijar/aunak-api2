@@ -1,9 +1,8 @@
 from rest_framework.decorators import api_view, permission_classes
-from .utils import   refresh_dropbox_token
+from .utils import refresh_dropbox_token
 from .models import Teacher, Video
 import dropbox
 from rest_framework.decorators import permission_classes
-from django.conf import settings
 from rest_framework import viewsets
 from django.shortcuts import render
 from .models import Video, DropboxToken, VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
@@ -21,7 +20,6 @@ from rest_framework.views import APIView
 from knox.models import AuthToken
 from knox.auth import TokenAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
-from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
@@ -377,7 +375,6 @@ def get_dropbox_client():
     token_instance = DropboxToken.objects.get(id=1)
     return dropbox.Dropbox(token_instance.access_token)
 
- 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -421,10 +418,12 @@ def upload_video(request):
             if links.links:
                 shared_link = links.links[0].url
             else:
-                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
+                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(
+                    dropbox_path)
                 shared_link = shared_link_metadata.url
 
-            preview_link = shared_link.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+            preview_link = shared_link.replace(
+                'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
 
         except dropbox.exceptions.ApiError as err:
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -443,7 +442,6 @@ def upload_video(request):
         video.save()
 
         return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
-
 
 
 @api_view(['GET'])
@@ -486,6 +484,7 @@ def get_all_videos(request):
 
     return Response(video_list, status=status.HTTP_200_OK)
 
+
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_video(request, video_id):
@@ -508,14 +507,14 @@ def delete_video(request, video_id):
             # Test a simple operation to verify token validity
             dbx.users_get_current_account()
             return dbx
-        except dropbox.exceptions.AuthError: 
+        except dropbox.exceptions.AuthError:
             refresh_dropbox_token()
             return get_dropbox_client()
 
     try:
         dbx = get_valid_dropbox_client()
         dbx.files_delete_v2(dropbox_path)
-    except dropbox.exceptions.AuthError: 
+    except dropbox.exceptions.AuthError:
         refresh_dropbox_token()
         dbx = get_dropbox_client()
         try:

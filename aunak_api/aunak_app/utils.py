@@ -4,6 +4,7 @@ import requests
 from django.conf import settings
 from .models import DropboxToken
 
+
 def refresh_dropbox_token():
     url = "https://api.dropboxapi.com/oauth2/token"
     data = {
@@ -12,13 +13,13 @@ def refresh_dropbox_token():
         "client_id": settings.DROPBOX_APP_KEY,
         "client_secret": settings.DROPBOX_APP_SECRET,
     }
-    
+
     response = requests.post(url, data=data)
-    
-    if response.status_code == 200: 
+
+    if response.status_code == 200:
         new_token = response.json()['access_token']
         # Update the token in settings
-        settings.DROPBOX_ACCESS_TOKEN = new_token 
+        settings.DROPBOX_ACCESS_TOKEN = new_token
         # Update the token in the database
         token_instance, created = DropboxToken.objects.get_or_create(id=1)
         token_instance.access_token = new_token

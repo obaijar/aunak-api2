@@ -1,6 +1,6 @@
 from rest_framework import serializers, generics
 from django.contrib.auth.models import User
-from .models import Video, Teacher, Course, Purchase, Subject, Grade,Subject_type
+from .models import Video, Teacher, Course, Purchase, Subject, Grade, Subject_type
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -14,10 +14,12 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = "__all__"
 
+
 class SubjectTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject_type
         fields = "__all__"
+
 
 class GradeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,11 +59,13 @@ class VideoSerializer(serializers.ModelSerializer):
                   'subject', 'subject_type', 'teacher']
         read_only_fields = ['uploaded_by']
 
+
 class VideoSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Video
         fields = "__all__"
+
 
 class CourseSerializer(serializers.ModelSerializer):
     videos = VideoSerializer(many=True)
@@ -87,10 +91,13 @@ class PurchaseSerializer(serializers.ModelSerializer):
         self.fields['course'] = CourseSerializer()
         self.fields['user'] = serializers.StringRelatedField()
         return super(PurchaseSerializer, self).to_representation(instance)
-    
+
+
 class TeacherSerializer2(serializers.ModelSerializer):
-    subjects = serializers.SlugRelatedField(slug_field='name', queryset=Subject.objects.all(), many=True)
-    grades = serializers.SlugRelatedField(slug_field='level', queryset=Grade.objects.all(), many=True)
+    subjects = serializers.SlugRelatedField(
+        slug_field='name', queryset=Subject.objects.all(), many=True)
+    grades = serializers.SlugRelatedField(
+        slug_field='level', queryset=Grade.objects.all(), many=True)
 
     class Meta:
         model = Teacher

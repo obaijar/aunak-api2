@@ -1,7 +1,7 @@
 from .views import RegisterAPI, LoginAPI
 from django.urls import path, include
 from knox import views as knox_views
-from .views import RegisterAPI, UserListView, delete_video,UserDeleteView, get_all_videos, upload_video, get_videos, update_course, ChangePasswordAPI, SubjectTypeListView, CourseViewSet, VideoListView, SubjectCreateView, PurchaseDeleteView, SubjectSearchView, SubjectListView, LoginAPI, CourseSearchView, GradeListView, TeacherListView, TeacherCreateView, CourseCreateView, UserPurchasesListView, PurchaseListCreateView, PurchaseDetailView, VideoDeleteAPIView, CourseListView, TrackViewAPIView, VideoListCreateAPI, TeacherViewSet, VideoDetailAPI, VideoListAPIView
+from .views import RegisterAPI, UserListView, delete_video, UserDeleteView, get_all_videos, upload_video, get_videos, update_course, ChangePasswordAPI, SubjectTypeListView, CourseViewSet, VideoListView, SubjectCreateView, PurchaseDeleteView, SubjectSearchView, SubjectListView, LoginAPI, CourseSearchView, GradeListView, TeacherListView, TeacherCreateView, CourseCreateView, UserPurchasesListView, PurchaseListCreateView, PurchaseDetailView, VideoDeleteAPIView, CourseListView, TrackViewAPIView, VideoListCreateAPI, TeacherViewSet, VideoDetailAPI, VideoListAPIView
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -14,7 +14,7 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('delete-user/<int:user_id>/',
          UserDeleteView.as_view(), name='delete-user'),
-    path('users/', UserListView.as_view(), name='user-list'), 
+    path('users/', UserListView.as_view(), name='user-list'),
     path('api/register/', RegisterAPI.as_view(), name='register'),
     path('api/login/', LoginAPI.as_view(), name='login'),
     path('api/change-password/', ChangePasswordAPI.as_view(), name='change-password'),
