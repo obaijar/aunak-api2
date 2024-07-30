@@ -508,14 +508,14 @@ def delete_video(request, video_id):
             # Test a simple operation to verify token validity
             dbx.users_get_current_account()
             return dbx
-        except dropbox.exceptions.AuthError:
+        except dropbox.exceptions.AuthError: 
             refresh_dropbox_token()
             return get_dropbox_client()
 
     try:
         dbx = get_valid_dropbox_client()
         dbx.files_delete_v2(dropbox_path)
-    except dropbox.exceptions.AuthError:
+    except dropbox.exceptions.AuthError: 
         refresh_dropbox_token()
         dbx = get_dropbox_client()
         try:
