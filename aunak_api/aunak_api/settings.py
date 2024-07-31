@@ -143,13 +143,10 @@ DROPBOX_ACCESS_TOKEN = 'sl.B57MAinKMHzR9PKiHxuVEmezN2ivHg5ira-WE4qoQOz4wXIaC8O9R
 #  'TOKEN_TTL': None,  # Tokens do not expire
 #   'AUTO_REFRESH': False,  # Optional: disable auto-refresh to keep tokens truly non-expiring
 # }
-
+#timedelta(hours=10)
 REST_KNOX = {
-    'TOKEN_TTL': timedelta(hours=10),  # time to live (without refresh)
-    'TOKEN_LIMIT_PER_USER': None,
-    'AUTO_REFRESH': True,
-    'MIN_REFRESH_INTERVAL': 60  # number of seconds
-}
+       'TOKEN_TTL': None,  # will create tokens that never expire
+    }
 
 DROPBOX_APP_KEY = 'cdor7k5dqf8yzmx'
 DROPBOX_APP_SECRET = '33qfmldrceojsa2'

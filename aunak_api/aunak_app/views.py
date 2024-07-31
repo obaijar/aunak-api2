@@ -177,7 +177,7 @@ class TrackViewAPIView(generics.GenericAPIView):
 
         if request.user.is_staff:
             # Admin user, no view count increment
-            video_url = request.build_absolute_uri(video.video_file.url)
+            video_url = request.build_absolute_uri(video.preview_link)
             return Response(
                 {"detail": "Admin access, view count not incremented.",
                     "video_url": video_url},
@@ -193,7 +193,7 @@ class TrackViewAPIView(generics.GenericAPIView):
             )
         video_view.view_count += 1
         video_view.save()
-        video_url = request.build_absolute_uri(video.video_file.url)
+        video_url = request.build_absolute_uri(video.preview_link)
         return Response(
             {"detail": "View count increased.", "video_url": video_url},
             status=status.HTTP_200_OK
