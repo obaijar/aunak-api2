@@ -396,13 +396,9 @@ def upload_video(request):
         except Teacher.DoesNotExist:
             return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        dropbox_path = f'/videos/{video_file.name}'
-
-        # Ensure Dropbox client is ready
         def get_valid_dropbox_client():
             try:
                 dbx = get_dropbox_client()
-                # Test a simple operation to verify token validity
                 dbx.users_get_current_account()
                 return dbx
             except dropbox.exceptions.AuthError:
@@ -411,37 +407,102 @@ def upload_video(request):
 
         dbx = get_valid_dropbox_client()
 
-        # Upload the video and get a shared link
+        # Define the original path and the potential copy path
+        dropbox_path = f'/videos/{video_file.name}'
+        dropbox_copy_path = f'/videos/copy_{video_file.name}'
+
         try:
+            # Check if the file already exists in Dropbox
+            existing_file_metadata = dbx.files_get_metadata(dropbox_path)
+            file_exists = existing_file_metadata is not None
+
+            # If the file exists, make a copy
+            if file_exists:
+                # Upload the copy with a different name
+                video_file.seek(0)  # Reset file pointer
+                dbx.files_upload(video_file.read(), dropbox_copy_path)
+                links_copy = dbx.sharing_list_shared_links(path=dropbox_copy_path)
+                if links_copy.links:
+                    shared_link_copy = links_copy.links[0].url
+                else:
+                    shared_link_metadata_copy = dbx.sharing_create_shared_link_with_settings(dropbox_copy_path)
+                    shared_link_copy = shared_link_metadata_copy.url
+
+                preview_link_copy = shared_link_copy.replace(
+                    'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+
+                # Create a copy video instance
+                video_copy = Video(
+                    title=f'{title} - Copy',
+                    video_file_path=dropbox_copy_path,
+                    preview_link=preview_link_copy,
+                    grade=grade,
+                    subject=subject,
+                    subject_type=subject_type,
+                    teacher=teacher,
+                    uploaded_by=request.user
+                )
+                video_copy.save()
+
+            # Upload the original file
+            video_file.seek(0)  # Reset file pointer again
             dbx.files_upload(video_file.read(), dropbox_path)
             links = dbx.sharing_list_shared_links(path=dropbox_path)
             if links.links:
                 shared_link = links.links[0].url
             else:
-                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(
-                    dropbox_path)
+                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
                 shared_link = shared_link_metadata.url
 
             preview_link = shared_link.replace(
                 'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
 
+            # Create the original video instance
+            video = Video(
+                title=title,
+                video_file_path=dropbox_path,
+                preview_link=preview_link,
+                grade=grade,
+                subject=subject,
+                subject_type=subject_type,
+                teacher=teacher,
+                uploaded_by=request.user
+            )
+            video.save()
+
+            return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
+
         except dropbox.exceptions.ApiError as err:
+            if isinstance(err.error, dropbox.files.GetMetadataError) and err.error.is_path():
+                # If the file does not exist, proceed with a normal upload without a copy
+                video_file.seek(0)  # Reset file pointer again
+                dbx.files_upload(video_file.read(), dropbox_path)
+                links = dbx.sharing_list_shared_links(path=dropbox_path)
+                if links.links:
+                    shared_link = links.links[0].url
+                else:
+                    shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
+                    shared_link = shared_link_metadata.url
+
+                preview_link = shared_link.replace(
+                    'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
+
+                # Create the original video instance
+                video = Video(
+                    title=title,
+                    video_file_path=dropbox_path,
+                    preview_link=preview_link,
+                    grade=grade,
+                    subject=subject,
+                    subject_type=subject_type,
+                    teacher=teacher,
+                    uploaded_by=request.user
+                )
+                video.save()
+
+                return Response({'success': 'Video uploaded successfully without copy'}, status=status.HTTP_201_CREATED)
+
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        # Create video instance with the original Dropbox path
-        video = Video(
-            title=title,
-            video_file_path=dropbox_path,  # Store the original Dropbox path
-            preview_link=preview_link,  # Optionally store the preview link
-            grade=grade,
-            subject=subject,
-            subject_type=subject_type,
-            teacher=teacher,
-            uploaded_by=request.user
-        )
-        video.save()
-
-        return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
