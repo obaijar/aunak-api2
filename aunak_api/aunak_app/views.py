@@ -359,7 +359,24 @@ def delete_course(request, course_id):
     except Course.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
+@api_view(['DELETE'])
+def delete_subject(request, subject_id):
+    try:
+        subject = Subject.objects.get(id=subject_id)
+        subject.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Course.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
 
+@api_view(['DELETE'])
+def delete_subject_type(request, subject_type_id):
+    try:
+        subject_type = Subject_type.objects.get(id=subject_type_id)
+        subject_type.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Course.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
 class SubjectSearchView(generics.ListAPIView):
     serializer_class = SubjectSerializer
     permission_classes = [permissions.AllowAny]
@@ -374,7 +391,6 @@ def get_dropbox_client():
     # Fetch the latest access token from the database
     token_instance = DropboxToken.objects.get(id=1)
     return dropbox.Dropbox(token_instance.access_token)
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -412,13 +428,18 @@ def upload_video(request):
         dropbox_copy_path = f'/videos/copy_{video_file.name}'
 
         try:
-            # Check if the file already exists in Dropbox
-            existing_file_metadata = dbx.files_get_metadata(dropbox_path)
-            file_exists = existing_file_metadata is not None
+            try:
+                # Check if the file already exists in Dropbox
+                existing_file_metadata = dbx.files_get_metadata(dropbox_path)
+                file_exists = True
+            except dropbox.exceptions.ApiError as e:
+                if isinstance(e.error, dropbox.files.GetMetadataError) and e.error.is_path():
+                    file_exists = False
+                else:
+                    raise e
 
-            # If the file exists, make a copy
             if file_exists:
-                # Upload the copy with a different name
+                # File exists, create a copy
                 video_file.seek(0)  # Reset file pointer
                 dbx.files_upload(video_file.read(), dropbox_copy_path)
                 links_copy = dbx.sharing_list_shared_links(path=dropbox_copy_path)
@@ -444,37 +465,8 @@ def upload_video(request):
                 )
                 video_copy.save()
 
-            # Upload the original file
-            video_file.seek(0)  # Reset file pointer again
-            dbx.files_upload(video_file.read(), dropbox_path)
-            links = dbx.sharing_list_shared_links(path=dropbox_path)
-            if links.links:
-                shared_link = links.links[0].url
             else:
-                shared_link_metadata = dbx.sharing_create_shared_link_with_settings(dropbox_path)
-                shared_link = shared_link_metadata.url
-
-            preview_link = shared_link.replace(
-                'www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '?raw=1')
-
-            # Create the original video instance
-            video = Video(
-                title=title,
-                video_file_path=dropbox_path,
-                preview_link=preview_link,
-                grade=grade,
-                subject=subject,
-                subject_type=subject_type,
-                teacher=teacher,
-                uploaded_by=request.user
-            )
-            video.save()
-
-            return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
-
-        except dropbox.exceptions.ApiError as err:
-            if isinstance(err.error, dropbox.files.GetMetadataError) and err.error.is_path():
-                # If the file does not exist, proceed with a normal upload without a copy
+                # Upload the original file
                 video_file.seek(0)  # Reset file pointer again
                 dbx.files_upload(video_file.read(), dropbox_path)
                 links = dbx.sharing_list_shared_links(path=dropbox_path)
@@ -500,10 +492,10 @@ def upload_video(request):
                 )
                 video.save()
 
-                return Response({'success': 'Video uploaded successfully without copy'}, status=status.HTTP_201_CREATED)
+            return Response({'success': 'Video uploaded successfully'}, status=status.HTTP_201_CREATED)
 
+        except dropbox.exceptions.ApiError as err:
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
