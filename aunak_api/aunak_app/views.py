@@ -51,7 +51,7 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
+ 
 
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = RegisterSerializer
