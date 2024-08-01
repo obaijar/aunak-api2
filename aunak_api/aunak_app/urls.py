@@ -66,5 +66,4 @@ urlpatterns = [
          views.delete_subject, name='delete_subject'),
     path('api/subject_type/delete/<int:subject_type_id>/',
          views.delete_subject_type, name='delete_subject_type'),
-
 ]

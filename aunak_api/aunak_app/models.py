@@ -66,25 +66,14 @@ class Video(models.Model):
         ('9', '9th Grade'),
         ('12', '12th Grade 3lme'),
         ('13', '12th Grade adabe'),
-    ]
-    SUBJECT_CHOICES = [
-        ('physics', 'Physics'),
-        ('math', 'Math'),
-    ]
-    SUBJECT_TYPE_CHOICES = [
-        ('1', 'mukathefat'),
-        ('2', 't2ses'),
-        ('3', 'jalsat_e'),
-    ]
+    ] 
 
     title = models.CharField(max_length=255)
     preview_link = models.CharField(max_length=255)
     video_file_path = models.CharField(max_length=1024)
     grade = models.CharField(max_length=2, choices=GRADE_CHOICES, default='9')
-    subject = models.CharField(
-        max_length=7, choices=SUBJECT_CHOICES, default='physics')
-    subject_type = models.CharField(
-        max_length=7, choices=SUBJECT_TYPE_CHOICES, default='1')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    subject_type = models.ForeignKey(Subject_type, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
 

@@ -398,8 +398,8 @@ def upload_video(request):
     if request.method == 'POST':
         title = request.data.get('title')
         grade = request.data.get('grade')
-        subject = request.data.get('subject')
-        subject_type = request.data.get('subject_type')
+        subject_id = request.data.get('subject')
+        subject_type_id = request.data.get('subject_type')
         teacher_id = request.data.get('teacher')
         video_file = request.FILES.get('video_file')
 
@@ -411,6 +411,18 @@ def upload_video(request):
             teacher = Teacher.objects.get(id=teacher_id)
         except Teacher.DoesNotExist:
             return Response({'error': 'Teacher not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get the subject instance
+        try:
+            subject = Subject.objects.get(id=subject_id)
+        except Subject.DoesNotExist:
+            return Response({'error': 'Subject not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get the subject_type instance
+        try:
+            subject_type = Subject_type.objects.get(id=subject_type_id)
+        except Subject_type.DoesNotExist:
+            return Response({'error': 'Subject type not found'}, status=status.HTTP_404_NOT_FOUND)
 
         def get_valid_dropbox_client():
             try:
