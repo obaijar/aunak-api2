@@ -593,3 +593,24 @@ def delete_video(request, video_id):
     video.delete()
 
     return Response({'success': 'Video deleted successfully'}, status=status.HTTP_200_OK)
+
+from django.db.models.signals import post_delete
+
+@receiver(post_delete, sender=Video)
+def delete_video_from_dropbox(sender, instance, **kwargs):
+    def get_valid_dropbox_client():
+        try:
+            dbx = get_dropbox_client()
+            dbx.users_get_current_account()
+            return dbx
+        except dropbox.exceptions.AuthError:
+            refresh_dropbox_token()
+            return get_dropbox_client()
+
+    dropbox_path = instance.video_file_path
+    dbx = get_valid_dropbox_client()
+
+    try:
+        dbx.files_delete_v2(dropbox_path)
+    except dropbox.exceptions.ApiError as err:
+        print(f'Failed to delete video from Dropbox: {err}')
