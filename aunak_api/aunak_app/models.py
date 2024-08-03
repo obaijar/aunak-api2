@@ -52,8 +52,8 @@ class Subject_type(models.Model):
 
 class Teacher(models.Model):
 
-    name = models.CharField(max_length=255)
-    age = models.CharField(max_length=255)
+    name = models.CharField(max_length=255) 
+    email= models.CharField(max_length=255)
     subjects = models.ManyToManyField(Subject, related_name='teachers')
     grades = models.ManyToManyField(Grade, related_name='teachers')
 

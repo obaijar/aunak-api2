@@ -4,7 +4,6 @@ from .models import Teacher, Video
 import dropbox
 from rest_framework.decorators import permission_classes
 from rest_framework import viewsets
-from django.shortcuts import render
 from .models import Video, DropboxToken, VideoView, Teacher, Subject_type, Course, Purchase, Subject, Grade
 # Create your views here.
 from rest_framework import generics, permissions
@@ -31,6 +30,7 @@ from knox.auth import TokenAuthentication
 from rest_framework.authentication import BasicAuthentication
 from django.contrib.auth.models import User
 from .utils import refresh_dropbox_token
+from django.db.models.signals import post_delete
 
 
 class UserDeleteView(APIView):
@@ -594,7 +594,6 @@ def delete_video(request, video_id):
 
     return Response({'success': 'Video deleted successfully'}, status=status.HTTP_200_OK)
 
-from django.db.models.signals import post_delete
 
 @receiver(post_delete, sender=Video)
 def delete_video_from_dropbox(sender, instance, **kwargs):

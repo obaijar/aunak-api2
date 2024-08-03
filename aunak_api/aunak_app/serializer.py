@@ -38,15 +38,20 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     is_admin = serializers.BooleanField(write_only=True)
+    email = serializers.EmailField(required=True)  # Add the email field here
 
     class Meta:
         model = User
-        fields = ('username', 'password', 'is_admin')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('username', 'password', 'is_admin', 'email')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'required': True}  # Ensure email is required
+        }
 
     def create(self, validated_data):
         is_admin = validated_data.pop('is_admin', False)
-        user = User.objects.create_user(**validated_data)
+        email = validated_data.pop('email')  # Extract the email from validated data
+        user = User.objects.create_user(**validated_data, email=email)  # Pass email to create_user method
         user.is_staff = is_admin
         user.save()
         return user
