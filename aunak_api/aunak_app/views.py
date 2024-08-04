@@ -226,7 +226,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
 class CourseListView(generics.ListAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-
+    permission_classes = [permissions.AllowAny]
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()

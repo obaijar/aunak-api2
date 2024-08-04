@@ -106,7 +106,7 @@ class TeacherSerializer2(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = ['name', 'age', 'subjects', 'grades']
+        fields = ['name' , 'subjects', 'grades']
 
     def create(self, validated_data):
         subjects_data = validated_data.pop('subjects')
