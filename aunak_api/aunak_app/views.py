@@ -85,11 +85,11 @@ class LoginAPI(APIView):
             return Response({
                 'user_id': user.id,
                 'user': user.username,
+                'email': user.email,  # Include the email in the response
                 'token': token,
                 'isadmin': user.is_staff
             })
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-
 
 class ChangePasswordAPI(APIView):
     authentication_classes = (TokenAuthentication,)
