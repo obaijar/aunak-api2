@@ -60,10 +60,11 @@ urlpatterns = [
          name='subject-create'),
     path('api/Subject/<int:grade>/',
          views.SubjectSearchView.as_view(), name='Search-subject'),
-    path('api/Subject_type/', views.SubjectTypeListView.as_view(),
-         name='subjectType-list'),
     path('api/subject/delete/<int:subject_id>/',
          views.delete_subject, name='delete_subject'),
+    path('api/Subject_type/', views.SubjectTypeListView.as_view(),
+         name='subjectType-list'),
     path('api/subject_type/delete/<int:subject_type_id>/',
          views.delete_subject_type, name='delete_subject_type'),
+    path('api/subject-type/add/',  views.SubjectTypeCreateView.as_view(), name='subject-type-create'),
 ]

@@ -176,7 +176,6 @@ class TrackViewAPIView(generics.GenericAPIView):
             return Response({"detail": "Video not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if request.user.is_staff:
-            # Admin user, no view count increment
             video_url = request.build_absolute_uri(video.preview_link)
             return Response(
                 {"detail": "Admin access, view count not incremented.",
@@ -237,9 +236,39 @@ class CourseViewSet(viewsets.ModelViewSet):
         return super().update(request, *args, **kwargs)
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 class PurchaseListCreateView(generics.ListCreateAPIView):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        logger.debug(f"Creating purchase for user: {user.id} - {user.username}")
+        
+        purchase = serializer.save(user=user)  # Save the purchase with the correct user
+        course = purchase.course  # Access the purchased course
+
+        # Get all videos associated with the course
+        videos = Video.objects.filter(course=course)
+        logger.debug(f"Found {videos.count()} videos for course: {course.id}")
+
+        # Loop through each video and reset the user's view count
+        for video in videos:
+            video_view = VideoView.objects.filter(user=user, video=video).first()
+            if video_view:
+                logger.debug(f"Found VideoView for video: {video.id} - {video.title}, user: {user.id}")
+                video_view.view_count = 0  # Reset view count
+                video_view.save()  # Save changes
+                logger.debug(f"Reset view count for video: {video.id} - {video.title} to 0")
+            else:
+                logger.debug(f"No VideoView found for video: {video.id} - {video.title}, user: {user.id}")
+
+        logger.debug(f"Purchase and view counts reset completed for user: {user.id}")
+        return purchase
 
 
 class PurchaseDetailView(generics.RetrieveAPIView):
@@ -613,3 +642,11 @@ def delete_video_from_dropbox(sender, instance, **kwargs):
         dbx.files_delete_v2(dropbox_path)
     except dropbox.exceptions.ApiError as err:
         print(f'Failed to delete video from Dropbox: {err}')
+
+class SubjectTypeCreateView(APIView):
+    def post(self, request):
+        serializer = SubjectTypeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
