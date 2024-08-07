@@ -89,7 +89,7 @@ class Course(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
-
+    price = models.PositiveIntegerField(default=0)
     def __str__(self):
         return self.title
 

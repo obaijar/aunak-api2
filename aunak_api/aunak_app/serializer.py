@@ -3,6 +3,26 @@ from django.contrib.auth.models import User
 from .models import Video, Teacher, Course, Purchase, Subject, Grade, Subject_type
 
 
+class AdminChangePasswordSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_user_id(self, value):
+        try:
+            User.objects.get(pk=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this ID does not exist.")
+        return value
+
+    def validate(self, data):
+        user_id = data.get('user_id')
+        new_password = data.get('new_password')
+
+        if not user_id or not new_password:
+            raise serializers.ValidationError("Both user_id and new_password are required.")
+
+        return data
+    
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

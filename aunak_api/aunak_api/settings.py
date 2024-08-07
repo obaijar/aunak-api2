@@ -152,3 +152,5 @@ DROPBOX_APP_KEY = 'cdor7k5dqf8yzmx'
 DROPBOX_APP_SECRET = '33qfmldrceojsa2'
 DROPBOX_REFRESH_TOKEN = 'StR82FTonNkAAAAAAAAAAUgNLWE0yowWswoRXBvMkhFalJCMP9DdgHMG4XIP0nDT'
 
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DEFAULT_CHARSET = 'utf-8'

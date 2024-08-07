@@ -9,7 +9,7 @@ from .models import Video, DropboxToken, VideoView, Teacher, Subject_type, Cours
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .serializer import SubjectTypeSerializer, VideoSerializer2, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
+from .serializer import SubjectTypeSerializer, AdminChangePasswordSerializer,VideoSerializer2, UserSerializer, CourseSerializer2, SubjectSerializer, GradeSerializer, TeacherSerializer2, PurchaseSerializer, CourseSerializer, RegisterSerializer, VideoSerializer, TeacherSerializer
 from .serializer import VideoSerializer
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
@@ -31,7 +31,8 @@ from rest_framework.authentication import BasicAuthentication
 from django.contrib.auth.models import User
 from .utils import refresh_dropbox_token
 from django.db.models.signals import post_delete
-
+import urllib.parse
+from django.db.models import Q
 
 class UserDeleteView(APIView):
     authentication_classes = [TokenAuthentication, BasicAuthentication]
@@ -45,7 +46,28 @@ class UserDeleteView(APIView):
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+class AdminChangePasswordView(generics.GenericAPIView):
+    serializer_class = AdminChangePasswordSerializer
+    permission_classes = [permissions.IsAdminUser]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user_id = serializer.validated_data['user_id']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            user = User.objects.get(pk=user_id)
+            user.set_password(new_password)
+            user.save()
+
+            return Response({"status": "password set"}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -303,14 +325,14 @@ class TeacherListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        # Get grade and subject from URL parameters
-        grade_level = self.kwargs['grade']
-        subject_name = self.kwargs['subject']
+        # Get grade and subject from URL parameters, decoding them
+        grade_level = urllib.parse.unquote(self.kwargs['grade'])
+        subject_name = urllib.parse.unquote(self.kwargs['subject'])
 
-        # Filter teachers by the given grade and subject
+        # Case-insensitive filtering (adjust based on your database settings)
         return Teacher.objects.filter(
-            grades__level=grade_level,
-            subjects__name=subject_name
+            Q(grades__level__icontains=grade_level),
+            Q(subjects__name__icontains=subject_name)
         ).distinct()
 
 
@@ -347,22 +369,29 @@ class CourseSearchView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = Course.objects.all()
-        grade = self.kwargs.get('grade')
-        subject = self.kwargs.get('subject')
-        teacher = self.kwargs.get('teacher')
-        subject_type = self.kwargs.get('subject_type')
+        grade = self.request.GET.get('grade')  # Use GET parameters for flexibility
+        subject = self.request.GET.get('subject')
+        teacher = self.request.GET.get('teacher')
+        subject_type = self.request.GET.get('subject_type')
 
-        if grade is not None:
+        if grade:  # Check if grade is provided (avoid None check)
+            grade = urllib.parse.unquote(grade)  # Decode Arabic characters
             queryset = queryset.filter(grade_id=grade)
-        if subject is not None:
-            subject_instance = get_object_or_404(Subject, name=subject)
+
+        if subject:
+            subject = urllib.parse.unquote(subject)  # Decode Arabic characters
+            subject_instance = get_object_or_404(Subject, name__icontains=subject)
             queryset = queryset.filter(subject_id=subject_instance.id)
-        if teacher is not None:
+
+        if teacher:
+            teacher = urllib.parse.unquote(teacher)  # Decode Arabic characters
             queryset = queryset.filter(teacher_id=teacher)
-        if subject_type is not None:
+
+        if subject_type:
+            subject_type = urllib.parse.unquote(subject_type)  # Decode Arabic characters
             queryset = queryset.filter(subject_type_id=subject_type)
 
-        return queryset
+        return queryset.distinct()  # Ensure unique results
 
 
 @api_view(['PATCH'])
