@@ -679,3 +679,14 @@ class SubjectTypeCreateView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class TeacherDelete(APIView):
+    permission_classes = [IsAuthenticated]  # Add appropriate permission classes
+    
+    def delete(self, request, pk, format=None):
+        try:
+            teacher = Teacher.objects.get(pk=pk)
+            teacher.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Teacher.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)

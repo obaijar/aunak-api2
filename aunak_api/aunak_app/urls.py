@@ -55,6 +55,8 @@ urlpatterns = [
     path('api/teachers/<str:grade>/<str:subject>/',
          views.TeacherListView.as_view(), name='teacher-list'),
     path('api/add-teacher/', views.TeacherCreateView.as_view(), name='add-teacher'),
+     path('teacher/<int:pk>/', views.TeacherDelete.as_view(), name='teacher-detail'),
+
     path('api/Grade/', views.GradeListView.as_view(), name='grade-list'),
     path('api/Subject/', views.SubjectListView.as_view(), name='Subject-list'),
     path('api/subject_create/', views.SubjectCreateView.as_view(),
