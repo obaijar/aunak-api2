@@ -92,12 +92,13 @@ class VideoSerializer2(serializers.ModelSerializer):
         fields = "__all__"
 
 
+
 class CourseSerializer(serializers.ModelSerializer):
-    videos = VideoSerializer(many=True)
+    videos = VideoSerializer(many=True, read_only=True)  # read_only since we will handle this manually
 
     class Meta:
         model = Course
-        fields = "__all__"
+        fields = '__all__'
 
 
 class CourseSerializer2(serializers.ModelSerializer):

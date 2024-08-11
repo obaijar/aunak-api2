@@ -1,3 +1,4 @@
+import json
 from rest_framework.decorators import api_view, permission_classes
 from .utils import refresh_dropbox_token
 from .models import Teacher, Video
@@ -325,14 +326,14 @@ class TeacherListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        # Get grade and subject from URL parameters, decoding them
-        grade_level = urllib.parse.unquote(self.kwargs['grade'])
-        subject_name = urllib.parse.unquote(self.kwargs['subject'])
+        # Get grade and subject from URL parameters
+        grade_id = self.kwargs['grade']
+        subject_id = self.kwargs['subject']
 
-        # Case-insensitive filtering (adjust based on your database settings)
+        # Filter teachers by grade and subject IDs
         return Teacher.objects.filter(
-            Q(grades__level__icontains=grade_level),
-            Q(subjects__name__icontains=subject_name)
+            Q(grades__id=grade_id),
+            Q(subjects__id=subject_id)
         ).distinct()
 
 
@@ -363,50 +364,60 @@ class SubjectCreateView(generics.CreateAPIView):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
 
+from django.http import JsonResponse
 
-class CourseSearchView(generics.ListAPIView):
-    serializer_class = CourseSerializer
+@api_view(['GET'])
+def CourseSearchView(request, grade, subject, subject_type, teacher):
+    # Perform the search based on provided parameters
+    courses = Course.objects.filter(
+        grade=grade,
+        subject=subject,
+        subject_type=subject_type,
+        teacher=teacher
+    )
 
-    def get_queryset(self):
-        queryset = Course.objects.all()
-        grade = self.request.GET.get('grade')  # Use GET parameters for flexibility
-        subject = self.request.GET.get('subject')
-        teacher = self.request.GET.get('teacher')
-        subject_type = self.request.GET.get('subject_type')
+    # Serialize the queryset
+    serializer = CourseSerializer(courses, many=True)
 
-        if grade:  # Check if grade is provided (avoid None check)
-            grade = urllib.parse.unquote(grade)  # Decode Arabic characters
-            queryset = queryset.filter(grade_id=grade)
+    # Return a JSON response
+    return Response({'courses': serializer.data})
 
-        if subject:
-            subject = urllib.parse.unquote(subject)  # Decode Arabic characters
-            subject_instance = get_object_or_404(Subject, name__icontains=subject)
-            queryset = queryset.filter(subject_id=subject_instance.id)
+class UpdateCourseView(APIView):
+    def patch(self, request, pk, format=None):
+        try:
+            course = Course.objects.get(pk=pk)
+        except Course.DoesNotExist:
+            return Response({'detail': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        if teacher:
-            teacher = urllib.parse.unquote(teacher)  # Decode Arabic characters
-            queryset = queryset.filter(teacher_id=teacher)
+        serializer = CourseSerializer(course, data=request.data, partial=True)
 
-        if subject_type:
-            subject_type = urllib.parse.unquote(subject_type)  # Decode Arabic characters
-            queryset = queryset.filter(subject_type_id=subject_type)
+        if serializer.is_valid():
+            serializer.save()
 
-        return queryset.distinct()  # Ensure unique results
+            if 'videos' in request.data:
+                videos_data = request.data['videos']
 
+                # Debugging: Log the type and content of videos_data
+      
 
-@api_view(['PATCH'])
-def update_course(request, pk):
-    try:
-        course = Course.objects.get(pk=pk)
-    except Course.DoesNotExist:
-        return Response({'detail': 'Course not found'}, status=status.not_found)
+                # Handle the case where videos_data is a string
+                if isinstance(videos_data, str):
+                    try:
+                        videos_data = json.loads(videos_data) 
+                    except json.JSONDecodeError:
+                        return Response({'detail': 'Invalid data format for videos'}, status=status.HTTP_400_BAD_REQUEST)
 
-    serializer = CourseSerializer(course, data=request.data, partial=True)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # Ensure that videos_data is now a list of integers
+                if isinstance(videos_data, list) and all(isinstance(video_id, int) for video_id in videos_data):
+                    videos = Video.objects.filter(id__in=videos_data)
+                    course.videos.set(videos)
+                else:
+                    return Response({'detail': 'Invalid data format for videos'}, status=status.HTTP_400_BAD_REQUEST)
 
+            updated_course = CourseSerializer(course)
+            return Response(updated_course.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
 def delete_course(request, course_id):
