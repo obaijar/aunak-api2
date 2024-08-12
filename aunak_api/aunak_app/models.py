@@ -26,16 +26,7 @@ class Grade(models.Model):
         return self.level
 
 
-class Subject(models.Model):
-    # SUBJECT_CHOICES = [
-    #   ('physics', 'Physics'),
-    # ('math', 'Math'),
-    #   ('arabic', 'Arabic'),
-    #  ('Philosophy', 'Philosophy'),
-    #  ('Social Studies', 'Social Studies'),
-    # ]
-    # name = models.CharField(
-    #    max_length=100, choices=SUBJECT_CHOICES, default='physics')
+class Subject(models.Model): 
     name = models.CharField(max_length=255)
     grade = models.ForeignKey(Grade, on_delete=models.CASCADE)
 

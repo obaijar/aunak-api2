@@ -701,3 +701,11 @@ class TeacherDelete(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Teacher.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
+        
+class SubjectUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Subject.objects.all()
+    serializer_class = SubjectSerializer
+
+class SubjectTypeUpdateView(generics.RetrieveUpdateAPIView):
+    queryset = Subject_type.objects.all()
+    serializer_class = SubjectTypeSerializer

@@ -65,9 +65,11 @@ urlpatterns = [
          views.SubjectSearchView.as_view(), name='Search-subject'),
     path('api/subject/delete/<int:subject_id>/',
          views.delete_subject, name='delete_subject'),
+     path('api/subjects/edit/<int:pk>/', views.SubjectUpdateView.as_view(), name='subject-update'),
     path('api/Subject_type/', views.SubjectTypeListView.as_view(),
          name='subjectType-list'),
     path('api/subject_type/delete/<int:subject_type_id>/',
          views.delete_subject_type, name='delete_subject_type'),
     path('api/subject-type/add/',  views.SubjectTypeCreateView.as_view(), name='subject-type-create'),
+    path('api/subject-type/edit/<int:pk>/',  views.SubjectTypeUpdateView.as_view(), name='subject-type-create'),
 ]
