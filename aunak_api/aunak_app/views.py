@@ -475,6 +475,11 @@ def upload_video(request):
         if not video_file:
             return Response({'error': 'No video file provided'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Check if a video with the same file name already exists in the database
+        if Video.objects.filter(video_file_path=f'/videos/{video_file.name}').exists():
+            return Response({'error': 'A video with this file name already exists. Please rename the file or upload a different video.'},
+                            status=status.HTTP_207_MULTI_STATUS)
+
         # Get the teacher instance
         try:
             teacher = Teacher.objects.get(id=teacher_id)
@@ -577,7 +582,6 @@ def upload_video(request):
 
         except dropbox.exceptions.ApiError as err:
             return Response({'error': f'Dropbox API error: {err}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_videos(request):
